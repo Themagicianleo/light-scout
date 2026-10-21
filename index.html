@@ -65,6 +65,11 @@ h2 { font-size: 18px; letter-spacing: -.01em; }
 .place-name svg { flex: none; width: 18px; height: 18px; color: var(--muted); }
 .place-meta { color: var(--muted); font-size: 13px; margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
 .tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); }
+.clocks { display: flex; gap: 18px; flex: none; }
+.clock { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.clock .v { font-family: var(--f-mono); font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+.clock small { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.clock + .clock { padding-left: 18px; border-left: 1px solid var(--line); }
 .notice { font-size: 13px; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 9px 12px; }
 
 /* search */
@@ -177,6 +182,10 @@ footer a { color: var(--muted); }
       <button class="place-name" id="placeBtn" aria-expanded="false" aria-controls="search"><span id="placeName">Loading…</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
       <div class="place-meta"><span id="placeCoords" class="mono"></span><span id="placeTz"></span><span id="placeTag"></span></div>
+    </div>
+    <div class="clocks" aria-live="off">
+      <div class="clock"><span class="label">Local time</span><span class="v" id="clockLocal">—</span><small id="clockLocalSub"></small></div>
+      <div class="clock"><span class="label">UTC</span><span class="v" id="clockUtc">—</span><small id="clockUtcSub"></small></div>
     </div>
   </div>
   <div class="notice" id="notice" hidden></div>
@@ -450,9 +459,26 @@ function dayModel(offset) {
   return a;
 }
 
+// ---------- clocks ----------
+function utcLabel(ms) {
+  const m = Math.round(ms / MIN), sign = m < 0 ? "−" : "+", a = Math.abs(m);
+  return "UTC" + (m === 0 ? "" : sign + Math.floor(a / 60) + (a % 60 ? ":" + String(a % 60).padStart(2, "0") : ""));
+}
+function tickClocks() {
+  const now = Date.now(), z = tz();
+  const clock = zone => new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: S.h12, timeZone: zone }).format(new Date(now));
+  const date = zone => new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", timeZone: zone }).format(new Date(now));
+  $("clockLocal").textContent = clock(z);
+  $("clockLocalSub").textContent = date(z) + " · " + utcLabel(offsetMs(z, now));
+  $("clockUtc").textContent = clock("UTC");
+  $("clockUtcSub").textContent = date("UTC");
+}
+setInterval(tickClocks, 1000);
+
 // ---------- render ----------
 function render() {
   if (!S.place) return;
+  tickClocks();
   const p = S.place, z = tz(), now = Date.now();
   const D = dayModel(S.dayOffset);
   const isToday = S.dayOffset === 0;
@@ -646,7 +672,7 @@ function renderNight(D) {
 // ---------- location ----------
 function setPlace(pl, opts = {}) {
   S.place = { name: pl.name, sub: pl.sub || "", lat: +pl.lat, lng: +pl.lng, tz: pl.tz && validTz(pl.tz) ? pl.tz : DEVICE_TZ, tzGuess: !(pl.tz && validTz(pl.tz)), example: !!opts.example };
-  if (!opts.example) store.set("place", S.place);
+  if (!opts.example) { store.set("place", S.place); notice(""); }
   S.weather = null; S.weatherFor = null; S.dayOffset = 0;
   closeSearch(); render(); loadWeather();
 }
