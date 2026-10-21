@@ -4,6 +4,7 @@ A photographer's light planner in a single web page: blue and golden hour times,
 
 - Sun and moon math runs on the device (no network needed).
 - Forecast: [Open-Meteo](https://open-meteo.com) (free, no API key). Place search: Open-Meteo geocoding. "Locate" names your spot via BigDataCloud's free reverse geocoder.
+- Rain radar: [Rain Viewer](https://www.rainviewer.com) past ~2 hours (free tier: personal use, regional zoom up to level 7, no forecast frames) on CARTO/OpenStreetMap base maps via Leaflet.
 - Saved places, units and clock format are stored in the browser.
 
 ## Files
