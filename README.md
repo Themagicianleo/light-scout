@@ -13,5 +13,5 @@ A photographer's light planner in a single web page: blue and golden hour times,
 
 ## Hosting
 
-GitHub Pages serves `index.html` from the `main` branch root (Settings → Pages → Deploy from a branch → `main` / `/ (root)`).
-On your phone, open the Pages link, allow location, then Share → **Add to Home Screen** to open it like an app. Location requires https, which Pages provides.
+GitHub Pages serves `index.html` from the `main` branch root (Settings → Pages → Deploy from a branch → `main` / `/ (root)`), along with `manifest.webmanifest`, `sw.js` and `icons/`, which make it installable.
+Install on a phone: open the Pages link, then tap **Install** in the top bar (Android/Chrome), or Share → **Add to Home Screen** (iPhone/Safari). It opens full-screen, works offline, and keeps the last forecast for when you have no signal.

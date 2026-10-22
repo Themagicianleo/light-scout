@@ -162,6 +162,10 @@ footer a { color: var(--muted); }
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="14" r="5" fill="var(--gold)"/><path d="M2 17h20" stroke="var(--fg)" stroke-width="2" stroke-linecap="round"/><path d="M12 3v3M4.5 7l2 2M19.5 7l-2 2" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg>
       Light Scout
     </div>
+    <button class="iconbtn" id="installBtn" hidden title="Install Light Scout on this device">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Install</span>
+    </button>
     <button class="iconbtn" id="favBtn" aria-pressed="false" title="Save this place" aria-label="Save this place">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" stroke-linejoin="round"/></svg>
     </button>
@@ -407,13 +411,17 @@ async function loadWeather() {
     const r = await fetch(url);
     if (!r.ok) throw new Error("HTTP " + r.status);
     const j = await r.json();
-    S.weather = j; S.weatherFor = key;
+    S.weather = j; S.weatherFor = key; S.weatherSavedAt = null;
+    store.set("wx", { key, at: Date.now(), j });
     if (j.timezone && validTz(j.timezone) && S.place.tz !== j.timezone && S.place.tzGuess) { S.place.tz = j.timezone; S.place.tzGuess = false; store.set("place", S.place); }
   } catch (e) {
-    S.weather = null; S.weatherErr = e;
+    const saved = store.get("wx", null);
+    if (saved && saved.key === key) { S.weather = saved.j; S.weatherFor = key; S.weatherSavedAt = saved.at; }
+    else { S.weather = null; S.weatherErr = e; }
   }
   render();
 }
+addEventListener("online", () => { if (S.weatherSavedAt || S.weatherErr) { S.weatherFor = null; loadWeather(); } });
 function wxAt(t) {
   const w = S.weather; if (!w || !w.hourly) return null;
   const h = w.hourly, i = Math.round((t / 1000 - h.time[0]) / 3600);
@@ -622,6 +630,8 @@ function renderWeather(D, now) {
   }
   if (!S.weather) { el.innerHTML = '<div class="err">Loading forecast…</div>'; return; }
   let html = "";
+  const saved = S.weatherSavedAt ? '<div class="notice" style="margin-bottom:10px">You\'re offline. Showing the forecast saved ' +
+    new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: S.h12 }).format(new Date(S.weatherSavedAt)) + '.</div>' : "";
   for (let t = D.start; t < D.end; t += HOUR) {
     const w = wxAt(t); if (!w) continue;
     const mid = t + HOUR / 2;
@@ -634,7 +644,7 @@ function renderWeather(D, now) {
       '<div class="cl">' + bar("L", w.low) + bar("M", w.mid) + bar("H", w.high) + '</div>' +
       '<span class="mini">' + windU(w.wind) + '</span><span class="mini">vis ' + visU(w.vis) + '</span></div>';
   }
-  el.innerHTML = html ? '<div class="hours" id="hoursRow">' + html + '</div>' : '<div class="err">This day is beyond the 16-day forecast.</div>';
+  el.innerHTML = html ? saved + '<div class="hours" id="hoursRow">' + html + '</div>' : '<div class="err">This day is beyond the 16-day forecast.</div>';
   const row = $("hoursRow"), nowEl = row && row.querySelector(".is-now, .is-golden");
   if (nowEl && row) row.scrollLeft = Math.max(0, nowEl.offsetLeft - row.offsetLeft - 8);
 }
@@ -717,6 +727,19 @@ function doSearch(q) {
         : '<div class="err" style="padding:6px 10px">No places found. Try a nearby town, or paste coordinates.</div>';
     }).catch(() => { if (seq === searchSeq) res.innerHTML = '<div class="err" style="padding:6px 10px">Search is offline here. Paste coordinates (like 36.06, -112.14) or pick an idea below.</div>'; });
 }
+
+// ---------- install (only on the hosted copy, which links a manifest) ----------
+const installable = !!document.querySelector('link[rel="manifest"]');
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+let installEvt = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; $("installBtn").hidden = false; });
+addEventListener("appinstalled", () => { installEvt = null; $("installBtn").hidden = true; notice(""); });
+if (installable && !standalone && iOS) $("installBtn").hidden = false;
+$("installBtn").onclick = async () => {
+  if (installEvt) { installEvt.prompt(); const c = await installEvt.userChoice.catch(() => null); if (c && c.outcome === "accepted") $("installBtn").hidden = true; installEvt = null; return; }
+  notice(iOS ? "To install: tap the Share button in Safari's toolbar, then Add to Home Screen." : "To install: open your browser menu and choose Install app or Add to Home screen.");
+};
 
 // ---------- wiring ----------
 $("placeBtn").onclick = () => $("search").hidden ? openSearch() : closeSearch();
