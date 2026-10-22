@@ -116,3 +116,19 @@ test('day plan: side of the aircraft beside the runway, nose/tail beyond the end
   // South of the 02L end: planes landing/departing on 02L fly away from you (tail); 20R traffic comes at you (nose).
   assert.deepEqual(under.dirs.map((d) => d.view), ['tail', 'front']);
 });
+
+test('METAR parsing: real AWC response (WSSS, 22 Oct 2026), variable wind, gusts, empty', async () => {
+  const { parseAwc } = await import('../planner/sources/metar-awc.js');
+  const real = [{ icaoId: 'WSSS', receiptTime: '2026-10-22T11:31:06.344Z', obsTime: 1792668600, reportTime: '2026-10-22T11:30:00.000Z', temp: 30, dewp: 24, wdir: 100, wspd: 5, visib: '6+', altim: 1009, qcField: 16, metarType: 'METAR', rawOb: 'METAR WSSS 221130Z 10005KT 020V140 9999 FEW018 BKN300 30/24 Q1009 NOSIG', lat: 1.368, lon: 103.982, elev: 17, name: 'Singapore/Changi Intl, 4, SG', cover: 'BKN', clouds: [{ cover: 'FEW', base: 1800 }, { cover: 'BKN', base: 30000 }], fltCat: 'VFR' }];
+  const m = parseAwc(real);
+  assert.equal(m.station, 'WSSS');
+  assert.equal(m.dirDeg, 100);
+  assert.equal(m.speedKt, 5);
+  assert.equal(m.gustKt, null);
+  assert.equal(m.observedMs, 1792668600000);
+  assert.equal(parseAwc([{ ...real[0], wdir: 'VRB', wspd: 3 }]).dirDeg, null);
+  assert.equal(parseAwc([{ ...real[0], wdir: 'VRB', wspd: 3 }]).variable, true);
+  assert.equal(parseAwc([{ ...real[0], rawOb: 'METAR WSSS 221130Z 22015G28KT 9999 FEW018 30/24 Q1009' }]).gustKt, 28);
+  assert.equal(parseAwc([]), null);
+  assert.throws(() => parseAwc({}), /unexpected/);
+});

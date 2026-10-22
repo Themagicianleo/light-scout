@@ -40,5 +40,6 @@ details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 /* wind and traffic */
 .pl-raw { font: 12px var(--f-mono); background: var(--raised); border-radius: 8px; padding: 8px; overflow-wrap: anywhere; margin: 0; }
 .pl-likely { color: var(--gold); font-weight: 700; }
-.row.is-likely { background: var(--gold-soft); border-radius: 8px; }
+.row.is-likely, tr.is-likely td { background: var(--gold-soft); }
+.row.is-likely { border-radius: 8px; }
 .pl-ac .name small { font-family: var(--f-mono); }
