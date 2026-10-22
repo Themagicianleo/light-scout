@@ -101,3 +101,18 @@ test('wind: components and likely runway end (real Changi METAR 22 Oct 2026: 100
   assert.equal(likelyEnd(ends, { dirDeg: null, speedKt: 6 }, CONFIG.wind).status, 'variable');
   assert.equal(likelyEnd(ends, null, CONFIG.wind).status, 'unavailable');
 });
+
+test('day plan: side of the aircraft beside the runway, nose/tail beyond the end', async () => {
+  const { dayPlan } = await import('../planner/plan.js');
+  const airport = { lat: 1.35019, lon: 103.994003 };
+  const runway = { ...RWY_02L, leIdent: '02L', heIdent: '20R', leTravelDeg: 23, heTravelDeg: 203 };
+  const noSun = () => ({ az: 0, alt: -10 });
+  const beside = dayPlan({ airport, runway, position: { lat: 1.36219, lon: 103.993297 }, dayStart: 0, sunPos: noSun, cloudsAt: () => null, cfg: CONFIG.light });
+  assert.deepEqual(beside.dirs.map((d) => d.view), ['rightSide', 'leftSide']);
+  assert.equal(beside.hours.length, 24);
+  assert.equal(beside.best, null, 'no sun all day: no best window');
+  const under = dayPlan({ airport, runway, position: { lat: 1.34897 - 0.0166, lon: 103.977997 - 0.0070 }, dayStart: 0, sunPos: noSun, cloudsAt: () => null, cfg: CONFIG.light });
+  assert.equal(under.underPath, true);
+  // South of the 02L end: planes landing/departing on 02L fly away from you (tail); 20R traffic comes at you (nose).
+  assert.deepEqual(under.dirs.map((d) => d.view), ['tail', 'front']);
+});

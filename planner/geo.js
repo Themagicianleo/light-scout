@@ -51,6 +51,7 @@ export function runwayRelation(proj, runway, lat, lon) {
   const c = u.x * ap.y - u.y * ap.x; // 2D cross product: + = to the left of u
   const Q = { x: A.x + t * u.x, y: A.y + t * u.y };
   const beyond = t < 0 ? 'A' : t > L ? 'B' : null;
+  const endPt = (which) => (which === 'A' ? A : B);
   // Distance to the runway itself (the segment), not the infinite line.
   const clampT = Math.min(Math.max(t, 0), L);
   const S = { x: A.x + clampT * u.x, y: A.y + clampT * u.y };
@@ -61,10 +62,12 @@ export function runwayRelation(proj, runway, lat, lon) {
     distToCentrelineM: Math.abs(c),
     distToRunwayM: Math.hypot(P.x - S.x, P.y - S.y),
     beyond,
-    // Direction from the passing plane (at Q) to you: this decides which side of the plane faces you.
-    planeToCameraDeg: bearingOf(P.x - Q.x, P.y - Q.y),
-    // Direction you face to look at the centre line.
-    cameraToRunwayDeg: bearingOf(Q.x - P.x, Q.y - P.y),
+    // Direction from the plane to you: this decides which side of the plane faces you.
+    // Beside the runway the plane is at Q (straight across). Beyond an end you may be ON the
+    // centre line, where Q is your own spot, so we use the runway end instead: you face the runway.
+    planeToCameraDeg: beyond ? bearingOf(P.x - endPt(beyond).x, P.y - endPt(beyond).y) : bearingOf(P.x - Q.x, P.y - Q.y),
+    // Direction you face to look at the runway (the centre line, or the runway end if beyond it).
+    cameraToRunwayDeg: beyond ? bearingOf(endPt(beyond).x - P.x, endPt(beyond).y - P.y) : bearingOf(Q.x - P.x, Q.y - P.y),
     bearingAtoB: bearingOf(u.x, u.y), // true direction of travel for the A-end runway (e.g. 02 = ~023)
     Q: proj.toLatLon(Q),
   };
