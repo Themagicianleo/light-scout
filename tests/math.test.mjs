@@ -132,3 +132,31 @@ test('METAR parsing: real AWC response (WSSS, 22 Oct 2026), variable wind, gusts
   assert.equal(parseAwc([]), null);
   assert.throws(() => parseAwc({}), /unexpected/);
 });
+
+test('traffic: arriving 02L with a time estimate, departing 20R, others ignored', async () => {
+  const { classify } = await import('../planner/traffic.js');
+  const { parseReadsb } = await import('../planner/sources/readsb.js');
+  const airport = { lat: 1.35019, lon: 103.994003, runways: [{ leIdent: '02L', heIdent: '20R', leLat: 1.34897, leLon: 103.977997, heLat: 1.38241, heLon: 103.991997, leTravelDeg: 23, heTravelDeg: 203 }] };
+  const list = parseReadsb({ ac: [
+    // 6 nm south-south-west of the 02L threshold on the centre line, heading 023, descending, 150 kt
+    { hex: 'aaa001', flight: 'SIA1    ', t: 'A359', alt_baro: 2000, gs: 150, track: 23, baro_rate: -700, lat: 1.34897 - 0.092, lon: 103.977997 - 0.039 },
+    // departing 20R: just south of the 02L/20R south end, heading 203, climbing
+    { hex: 'aaa002', flight: 'TGW2    ', t: 'A20N', alt_baro: 1500, gs: 170, track: 203, baro_rate: 2500, lat: 1.34897 - 0.02, lon: 103.977997 - 0.0085 },
+    // cruising overhead: too high
+    { hex: 'aaa003', flight: 'MAS144  ', t: 'A339', alt_baro: 40000, gs: 464.8, track: 331.89, lat: 1.385301, lon: 103.770983 },
+    // on the ground
+    { hex: 'aaa004', flight: 'SIA121  ', alt_baro: 'ground', gs: 5, track: 84, lat: 1.3684, lon: 103.9879 },
+    // no position: dropped
+    { hex: 'aaa005', flight: 'X' },
+  ] });
+  assert.equal(list.length, 4);
+  const r = classify(list, airport, CONFIG.traffic);
+  assert.equal(r.arrivals.length, 1);
+  assert.equal(r.arrivals[0].ident, '02L');
+  near(r.arrivals[0].distNm, 6.0, 0.1); // 0.092° south = 5.5 nm, 0.039° west = 2.3 nm
+  near(r.arrivals[0].etaMin, 6.0 / 150 * 60, 0.1, 'distance / ground speed = 2.4 min');
+  assert.equal(r.departures.length, 1);
+  assert.equal(r.departures[0].ident, '20R');
+  assert.equal(r.ground, 1);
+  assert.equal(r.others, 1);
+});

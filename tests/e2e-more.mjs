@@ -55,4 +55,53 @@ async function phase2(browser) {
   await page.close();
 }
 
-export const extra = [phase2];
+const TRAFFIC = { ac: [
+  { hex: 'aaa001', flight: 'SIA1    ', r: '9V-SMA', t: 'A359', alt_baro: 2000, gs: 150, track: 23, baro_rate: -700, lat: 1.34897 - 0.092, lon: 103.977997 - 0.039 },
+  { hex: 'aaa002', flight: 'TGW2    ', t: 'A20N', alt_baro: 1500, gs: 170, track: 203, baro_rate: 2500, lat: 1.34897 - 0.02, lon: 103.977997 - 0.0085 },
+  { hex: 'aaa003', flight: 'MAS144  ', t: 'A339', alt_baro: 40000, gs: 464.8, track: 331.89, lat: 1.385301, lon: 103.770983 },
+], msg: 'No error', now: Date.now(), total: 3, ctime: Date.now(), ptime: 0 };
+
+async function phase3(browser) {
+  let page = await plannerWithPosition(browser, { traffic: TRAFFIC });
+  await page.waitForFunction(() => document.querySelector('#plTraffic')?.textContent.includes('SIA1'));
+  const tr = await page.textContent('#plTraffic');
+  check('[traffic] arrival listed with an estimated time to the threshold', tr.includes('SIA1') && tr.includes('Arriving 02L') && tr.includes('~2 min to the threshold'));
+  check('[traffic] departure listed', tr.includes('TGW2') && tr.includes('Departing 20R'));
+  check('[traffic] cruising aircraft not listed, counted as other', !tr.includes('MAS144') && tr.includes('1 other aircraft nearby'));
+  check('[traffic] labelled as an estimate', (await page.textContent('#plTraffic .pl-est')) === 'Estimate');
+  check('[traffic] asked adsb.lol via the relay, 25 nm around Changi', page.relayCalls.some((u) => u === 'https://api.adsb.lol/v2/point/1.3502/103.9940/25'));
+  // Gentle polling: at most ~1 request per 20 s
+  const before = page.relayCalls.filter((u) => u.includes('adsb.lol')).length;
+  await page.waitForTimeout(5000);
+  const after = page.relayCalls.filter((u) => u.includes('adsb.lol')).length;
+  check('[traffic] no extra requests within 5 s', after - before === 0, `${after - before}`);
+  // Light tab: polling stops
+  await page.click('#tabLight');
+  check('[traffic] no JavaScript errors', page.errors.length === 0, page.errors.join(' | '));
+  await page.close();
+
+  page = await plannerWithPosition(browser, { traffic: 'down' });
+  await page.waitForFunction(() => document.querySelector('#plTraffic')?.textContent.includes('could not load'));
+  check('[traffic] provider down: friendly message', (await page.textContent('#plTraffic')).includes('Live traffic could not load: HTTP 503'));
+  await page.close();
+
+  // Pause after 10 minutes (fake clock)
+  page = await newPage(browser, { traffic: TRAFFIC });
+  await page.clock.install();
+  await page.addInitScript(() => {
+    localStorage.setItem('ls:planner:tab', '"planner"');
+    localStorage.setItem('ls:planner:positions', JSON.stringify({ WSSS: [{ id: 'a', name: 'East fence', lat: 1.36219, lon: 103.993297 }] }));
+  });
+  await page.goto(BASE);
+  await page.waitForFunction(() => document.querySelector('#plTraffic')?.textContent.includes('SIA1'));
+  await page.clock.runFor(11 * 60 * 1000);
+  await page.waitForFunction(() => document.querySelector('#plTraffic')?.textContent.includes('Paused'));
+  const n = page.relayCalls.filter((u) => u.includes('adsb.lol')).length;
+  check('[traffic] pauses after 10 min; about 3 requests a minute until then', n >= 25 && n <= 35, `${n} requests in 10 min`);
+  await page.click('#plTraffic [data-act="resume"]');
+  await page.waitForFunction(() => !document.querySelector('#plTraffic').textContent.includes('Paused'));
+  check('[traffic] "Resume live" restarts it', true);
+  await page.close();
+}
+
+export const extra = [phase2, phase3];
