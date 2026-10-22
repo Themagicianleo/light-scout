@@ -21,13 +21,15 @@ function init() {
     LS.store.set('planner:tab', name);
     if (name === 'planner') {
       // Load the planner code only when needed, so the Light tab starts as fast as before.
-      const [{ startPlanner, addCard, ctx }, wind, traffic] = await Promise.all([
-        import('./ui.js'), import('./windCard.js').catch(() => null), import('./trafficCard.js').catch(() => null),
+      const [{ startPlanner, addCard, ctx }, wind, conditions, traffic] = await Promise.all([
+        import('./ui.js'), import('./windCard.js'), import('./conditionsCard.js'), import('./trafficCard.js'),
       ]);
       if (!init.cardsAdded) {
         init.cardsAdded = true;
-        wind?.windCard && addCard(wind.windCard(ctx));
-        traffic?.trafficCard && addCard(traffic.trafficCard(ctx));
+        // Order matters: the wind card shares the METAR and runway estimate with the conditions card.
+        addCard(wind.windCard(ctx));
+        addCard(conditions.conditionsCard(ctx));
+        addCard(traffic.trafficCard(ctx));
       }
       await startPlanner(views.planner);
     }

@@ -48,11 +48,13 @@ export function windCard(ctx) {
     el.hidden = false;
     const station = stationOf(a);
     const head = `<div class="card-head"><h2>${esc(t('windTitle'))}</h2><span class="tag pl-est">${esc(t('est'))}</span></div>`;
-    if (state.for !== station) { el.innerHTML = head + `<p class="err">${esc(t('windLoading'))}</p>`; markLikely(null); return; }
+    if (state.for !== station) { el.innerHTML = head + `<p class="err">${esc(t('windLoading'))}</p>`; markLikely(null); ctx.metar = null; ctx.windEstimate = null; return; }
     const m = state.metar;
+    ctx.metar = m; // shared with the Conditions card (observed visibility and cloud)
     if (!m || m.speedKt == null) {
       el.innerHTML = head + `<p class="notice">${esc(t('windUnavailable', { station }))}</p>` + (state.error ? `<p class="pl-note">${esc(state.error.message)}</p>` : '');
       markLikely(null);
+      ctx.windEstimate = { status: 'unavailable', likely: null };
       return;
     }
     const windText = m.speedKt === 0 ? t('windCalm') : m.dirDeg == null ? t('windVrb', { spd: m.speedKt }) : t('windText', { dir: String(m.dirDeg).padStart(3, '0'), spd: m.speedKt }) + (m.gustKt ? t('gust', { g: m.gustKt }) : '');
@@ -65,6 +67,7 @@ export function windCard(ctx) {
     const perRunway = a.runways.map((r) => ({ r, est: likelyEnd([{ ident: r.leIdent, headingDeg: r.leTravelDeg }, { ident: r.heIdent, headingDeg: r.heTravelDeg }], wind, CONFIG.wind) }));
     const sel = perRunway.find((x) => x.r.name === ctx.runway?.name) ?? perRunway[0];
     const status = sel.est.status === 'ok' ? t('likely', { ident: sel.est.likely }) : t(sel.est.status);
+    ctx.windEstimate = sel.est;
 
     const rows = perRunway.flatMap(({ r, est }) => est.rows.map((row) => {
       const likely = est.likely === row.ident;

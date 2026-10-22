@@ -34,6 +34,18 @@ export const CONFIG = {
     tooCloseKt: 2, // if the best end gets less headwind than this (mostly crosswind), say "too close to call"
   },
 
+  // ---- Suggestions (ESTIMATES from the forecast/observation; see planner/advice.js) ----
+  advice: {
+    fogVisM: 1000, // visibility below this: fog
+    hazeVisM: 5000, // below this: hazy, distant aircraft look washed out
+    clearVisM: 20000, // at least this (and little cloud): very clear air
+    rainPct: 60, // forecast chance of rain at or above this: "rain likely"
+    overcastPct: 70, // low or mid cloud at or above this: the sun is probably hidden
+    thinHighPct: 50, // high cloud at or above this, with little low/mid cloud: softened sun
+    lowMidForThinPct: 30,
+    shimmerAltDeg: 45, // sun this high and shining: heat shimmer over the runway is common
+  },
+
   metar: {
     refreshMinutes: 10, // METARs are issued every 30-60 minutes
     staleMinutes: 90, // older than this: show it, but say it's old

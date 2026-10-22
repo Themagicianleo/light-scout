@@ -28,7 +28,10 @@ score, the runway likely in use, which aircraft are arriving or departing, and t
 2. Add your position: tap **Add by tapping the map**, use **My location**, type **Coordinates**, or pick one of
    Light Scout's **saved places**. Drag the marker to fine-tune it. Pick a runway (the nearest one is used by default).
 3. Read the cards: *Your position and the runway* (calculated), *Light on aircraft, by hour* (estimate, up to 7 days
-   ahead, with a table of every number behind it), *Wind and runway in use*, and *Live traffic*.
+   ahead, with a cloud strip under the bars and a table of every number behind it), *Conditions and suggestions*,
+   *Wind and runway in use*, and *Live traffic*.
+4. **Tap a bar** on the light chart to see that hour in *Conditions and suggestions*: the forecast cloud (low / mid /
+   high), visibility, rain chance and weather; for the current hour, what the latest METAR measured; and suggestions.
 
 ### The maths, step by step
 1. **Sun position** comes from Light Scout's existing `sunPos()` (azimuth = compass direction, altitude = height).
@@ -62,6 +65,14 @@ score, the runway likely in use, which aircraft are arriving or departing, and t
 5. **Live traffic (estimate).** Aircraft within 25 nm, below 10,000 ft, with a track within 30° of a runway direction
    and within 2 nm of its extended centre line: before the threshold and not climbing = arriving; past it and not
    descending = departing. Time to the threshold ≈ distance ÷ ground speed.
+
+### Suggestions (estimates)
+Rules in `planner/advice.js`, thresholds in `planner/config.js` (`advice`). Each suggestion shows the numbers behind it:
+thunderstorms first (forecast code 95/96/99, or TS / CB in the METAR: a safety warning), fog under 1 km and haze under
+5 km (the METAR's measured visibility beats the forecast for the current hour), very clear air at 20 km+, rain at 60%+,
+front / side / back light at that hour, low or mid cloud at 70%+ (sun probably hidden), thin high cloud, heat shimmer
+when the sun is over 45° and shining, "planes pass almost overhead" under the flight path, the likely runway direction
+from the wind, and the day's best time.
 
 ### How to run and test it
 - Online: open the GitHub Pages site and tap **Plane spotting**. To install on an iPhone: Safari → Share → **Add to
@@ -102,6 +113,8 @@ the map; drawing a zoomable street map by hand isn't realistic. Everything else 
   matching and times are estimates; aircraft can go around, hold or change runway.
 - **No times without a forecast:** the airport's time zone comes from Open-Meteo; until it arrives, times use your
   device's time zone (the page says so).
+- **Suggestions are rules of thumb**, not forecasts of their own: they're only as good as the Open-Meteo forecast and
+  the METAR, and they don't know about local things like smoke, sea fog or heat shimmer on a cloudy day.
 - **airplanes.live terms were not verified**, so it's off by default.
 - **Offline:** map tiles and live traffic need a connection; the claude.ai preview of `src/app.html` has no planner tab
   (it can't load the extra files).

@@ -147,4 +147,32 @@ async function phase4(browser) {
   await context.close();
 }
 
-export const extra = [phase2, phase3, phase4];
+// Cloud, visibility and suggestions
+async function conditions(browser) {
+  let page = await plannerWithPosition(browser, { metar: 'real' });
+  await page.waitForFunction(() => document.querySelector('#plCond')?.textContent.includes('Measured now'));
+  let c = await page.textContent('#plCond');
+  check('[conditions] forecast for the current hour: cloud layers, visibility, rain chance', c.includes('Forecast (Open-Meteo)') && c.includes('Visibility') && c.includes('Rain chance') && (await page.locator('#plCond .pl-cl b').count()) === 3);
+  check('[conditions] measured now from the METAR: 10+ km, few 1,800 ft, broken 30,000 ft', c.includes('Measured now (METAR WSSS)') && c.includes('10+ km') && c.includes('Few 1,800 ft, Broken 30,000 ft'));
+  check('[conditions] suggestions with their reasons, labelled as an estimate', (await page.locator('#plCond .pl-advice li').count()) >= 2 && c.includes('Best light today') && (await page.textContent('#plCond .pl-est')) === 'Estimate');
+  check('[conditions] cloud strip under the light chart (24 hours)', (await page.locator('#plLight .pl-bar rect[opacity]').count()) === 24);
+  check('[conditions] numbers table has visibility and rain columns', (await page.textContent('#plNumbers thead')).includes('Visibility') && (await page.textContent('#plNumbers thead')).includes('Rain chance'));
+  // Tap the 3 PM bar: the card switches to that hour (forecast only, no METAR) and cloudy-afternoon advice
+  await page.locator('#plLight .pl-bar[data-h="15"]').click({ force: true });
+  c = await page.textContent('#plCond');
+  check('[conditions] tapping a bar picks that hour', /For 3:00\s?PM/.test(c) && (await page.locator('#plLight .pl-bar.is-sel').getAttribute('data-h')) === '15', c.slice(0, 120));
+  check('[conditions] 3 PM: backlit from the east side, clouds hide the sun', c.includes('Backlit from your position') && c.includes('Clouds will probably hide the sun') && !c.includes('Measured now'));
+  check('[conditions] no JavaScript errors', page.errors.length === 0, page.errors.join(' | '));
+  await page.close();
+
+  // Thunderstorm and 3 km visibility in the METAR: safety first
+  page = await plannerWithPosition(browser, { metar: 'storm' });
+  await page.waitForFunction(() => document.querySelector('#plCond')?.textContent.includes('Measured now'));
+  const first = await page.textContent('#plCond .pl-advice li:first-child');
+  check('[conditions] storm in the METAR: safety suggestion comes first', first.includes('Thunderstorms: stay safe first') && first.includes('measured by the METAR'));
+  c = await page.textContent('#plCond');
+  check('[conditions] measured 3 km haze beats the forecast\'s 20 km; TEMPO ignored', c.includes('Visibility: 3.0 km') && c.includes('Hazy: distant aircraft') && c.includes('TSRA') && !c.includes('+TSRA'));
+  await page.close();
+}
+
+export const extra = [phase2, phase3, phase4, conditions];

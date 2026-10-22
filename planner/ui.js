@@ -28,6 +28,7 @@ const P = {
   forecastSavedAt: null,
   tz: null, // the airport's time zone, from the forecast
   showNumbers: false,
+  selHour: null, // hour picked on the light chart (index 0-23), or null = now / best time
 };
 let map = null;
 const plugins = []; // cards added later (wind, traffic): { render(ctx) }
@@ -40,7 +41,18 @@ export const ctx = {
   get tz() { return P.tz || LS.DEVICE_TZ; },
   fmt: { time: (ms) => LS.fmtTime(ms, ctx.tz), hour: (ms) => LS.fmtHour(ms, ctx.tz), esc },
   rerender: () => renderAll(),
+  get selectedHour() { return selectedHour(); },
+  metar: null, // latest METAR, shared by windCard.js
+  windEstimate: null, // its runway estimate, shared by windCard.js
 };
+// The hour shown in the Conditions card: the one you tapped, else now (today), else the best time, else noon.
+function selectedHour() {
+  if (P.selHour != null) return P.selHour;
+  if (P.dayOffset === 0) return Math.min(23, Math.floor((Date.now() - dayStart()) / 3600e3));
+  const plan = lastPlan;
+  return plan?.best ? Math.floor((plan.best.start - dayStart()) / 3600e3) : 12;
+}
+let lastPlan = null;
 export function addCard(card) {
   plugins.push(card);
 }
@@ -75,6 +87,7 @@ function skeleton(root) {
   </section>
   <section class="card" id="plGeo"></section>
   <section class="card" id="plLight"></section>
+  <section class="card" id="plCond" hidden></section>
   <section class="card" id="plWind" hidden></section>
   <section class="card" id="plTraffic" hidden></section>
   <p class="pl-credits" id="plCredits"></p>`;
@@ -256,15 +269,13 @@ function dayStart() {
   return LS.zonedMidnight(ymd.y, ymd.m, ymd.d, z);
 }
 
-function cloudsAt(ms) {
-  const w = LS.wxFrom(P.forecast, ms);
-  return w ? { low: w.low, mid: w.mid, high: w.high } : null;
-}
+// One forecast hour (clouds, visibility, rain chance, weather code) from Light Scout's wxFrom().
+const weatherAt = (ms) => LS.wxFrom(P.forecast, ms);
 
 function buildPlan() {
   const a = P.airport, pos = ctx.position, r = ctx.runway;
   if (!a || !pos || !r) return null;
-  return dayPlan({ airport: a, runway: r, position: pos, dayStart: dayStart(), sunPos: LS.sunPos, cloudsAt, cfg: CONFIG.light });
+  return dayPlan({ airport: a, runway: r, position: pos, dayStart: dayStart(), sunPos: LS.sunPos, weatherAt, cfg: CONFIG.light });
 }
 
 function renderLight(plan) {
@@ -286,7 +297,7 @@ function renderLight(plan) {
   notes.push(P.tz ? t('tzNote', { tz: P.tz.replace(/_/g, ' ') }) : t('tzDevice'));
   el.innerHTML = head +
     `<p class="pl-best"><b>${esc(bestText)}</b></p>` +
-    lightChartSvg(plan, ctx.fmt, P.dayOffset === 0 ? Date.now() : null) + legendHtml() +
+    lightChartSvg(plan, ctx.fmt, P.dayOffset === 0 ? Date.now() : null, selectedHour()) + legendHtml() +
     `<div class="rows">${dirs}</div><p class="pl-note">${esc(t('sameLight'))}</p>` +
     `<p class="pl-note">${esc(t('lightNote', { good: cfg.goodAngleDeg, lo: cfg.lowAltDeg, hi: cfg.highAltDeg }))}</p>` +
     notes.map((n) => `<p class="pl-note">${esc(n)}</p>`).join('') +
@@ -314,6 +325,7 @@ function renderAll() {
   renderAirport();
   renderPositions();
   const plan = buildPlan();
+  lastPlan = plan;
   renderGeometry(plan);
   renderLight(plan);
   // Map extras: the runway in use for the plan, and a line to the centre line plus the sun's direction now.
@@ -361,9 +373,16 @@ export async function startPlanner(root) {
     renderAll();
   };
   $('plLight').addEventListener('click', (e) => {
+    const bar = e.target.closest('[data-h]');
+    if (bar) { // a bar on the chart: show that hour in the Conditions card
+      P.selHour = +bar.dataset.h;
+      renderAll();
+      return;
+    }
     const b = e.target.closest('[data-day]');
     if (!b) return;
     P.dayOffset = Math.min(6, Math.max(0, P.dayOffset + +b.dataset.day));
+    P.selHour = null;
     renderAll();
   });
   LS.onLang(() => renderAll());

@@ -107,11 +107,11 @@ test('day plan: side of the aircraft beside the runway, nose/tail beyond the end
   const airport = { lat: 1.35019, lon: 103.994003 };
   const runway = { ...RWY_02L, leIdent: '02L', heIdent: '20R', leTravelDeg: 23, heTravelDeg: 203 };
   const noSun = () => ({ az: 0, alt: -10 });
-  const beside = dayPlan({ airport, runway, position: { lat: 1.36219, lon: 103.993297 }, dayStart: 0, sunPos: noSun, cloudsAt: () => null, cfg: CONFIG.light });
+  const beside = dayPlan({ airport, runway, position: { lat: 1.36219, lon: 103.993297 }, dayStart: 0, sunPos: noSun, weatherAt: () => null, cfg: CONFIG.light });
   assert.deepEqual(beside.dirs.map((d) => d.view), ['rightSide', 'leftSide']);
   assert.equal(beside.hours.length, 24);
   assert.equal(beside.best, null, 'no sun all day: no best window');
-  const under = dayPlan({ airport, runway, position: { lat: 1.34897 - 0.0166, lon: 103.977997 - 0.0070 }, dayStart: 0, sunPos: noSun, cloudsAt: () => null, cfg: CONFIG.light });
+  const under = dayPlan({ airport, runway, position: { lat: 1.34897 - 0.0166, lon: 103.977997 - 0.0070 }, dayStart: 0, sunPos: noSun, weatherAt: () => null, cfg: CONFIG.light });
   assert.equal(under.underPath, true);
   // South of the 02L end: planes landing/departing on 02L fly away from you (tail); 20R traffic comes at you (nose).
   assert.deepEqual(under.dirs.map((d) => d.view), ['tail', 'front']);
@@ -172,4 +172,47 @@ test('offline: sw.js caches every planner file, the airport data and Leaflet', a
   for (const f of files) assert.ok(sw.includes(`"${f}"`), `${f} is missing from sw.js`);
   const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.ok(html.includes('<script type="module" src="planner/main.js">'), 'build.sh adds the planner');
+});
+
+test('METAR observed conditions: real Changi report, haze/thunderstorm, CAVOK, trend ignored', async () => {
+  const { parseConditions } = await import('../planner/sources/metar-awc.js');
+  const real = parseConditions('METAR WSSS 221230Z 05006KT 010V090 9999 FEW018 BKN300 29/24 Q1010 NOSIG');
+  assert.equal(real.visibilityM, 10000, '9999 means 10 km or more');
+  assert.deepEqual(real.clouds.map((c) => c.cover + c.baseFt), ['FEW1800', 'BKN30000']);
+  assert.deepEqual(real.weather, []);
+  const storm = parseConditions('METAR WSSS 221230Z 22015G28KT 3000 -TSRA HZ FEW015CB SCT020 25/24 Q1010 TEMPO 1500 +TSRA');
+  assert.equal(storm.visibilityM, 3000, 'TEMPO visibility is a forecast, not now');
+  assert.deepEqual(storm.weather, ['-TSRA', 'HZ']);
+  assert.equal(storm.clouds[0].type, 'CB');
+  assert.equal(parseConditions('METAR EGLL 221220Z 24010KT CAVOK 15/08 Q1020').cavok, true);
+});
+
+test('suggestions: storm first, haze from the METAR, rain, light, runway, best time', async () => {
+  const { advise } = await import('../planner/advice.js');
+  const cfg = CONFIG.advice;
+  const plan = { underPath: false, best: { start: 0, end: 3, rating: 'good', peak: 92 }, dirs: [{ ident: '02L', view: 'rightSide' }, { ident: '20R', view: 'leftSide' }] };
+  const hour = (wx, sun = { az: 100, alt: 20 }, light = { rating: 'good', lighting: 'front', delta: 10, blocked: 0.1 }) => ({ t: 0, sun, wx, light });
+  const clear = { low: 5, mid: 0, high: 20, total: 10, vis: 24000, pp: 5, code: 1 };
+  const keys = (a) => a.map((x) => x.key);
+
+  let a = advise({ hour: hour(clear), plan, wind: { status: 'ok', likely: '20R' }, observed: null, cfg });
+  assert.deepEqual(keys(a), ['adv_crisp', 'adv_frontlit', 'adv_runway', 'adv_best']);
+  assert.equal(a.find((x) => x.key === 'adv_runway').vars.view, 'leftSide');
+
+  // Thunderstorm in the METAR: safety comes first; haze from the measured 3,000 m beats the forecast's 24 km.
+  a = advise({ hour: hour(clear), plan, wind: null, observed: { visibilityM: 3000, clouds: [{ cover: 'FEW', baseFt: 1500, type: 'CB' }], weather: ['-TSRA'] }, cfg });
+  assert.equal(a[0].key, 'adv_storm');
+  assert.equal(a[0].tone, 'bad');
+  assert.deepEqual(a.find((x) => x.key === 'adv_haze').vars, { km: 3, src: 'metar' });
+
+  // Rainy, overcast afternoon, backlit, high sun hidden by cloud: no shimmer.
+  a = advise({ hour: hour({ low: 85, mid: 40, high: 20, total: 95, vis: 8000, pp: 70, code: 63 }, { az: 250, alt: 50 }, { rating: 'poor', lighting: 'back', delta: 170, blocked: 0.85 }), plan: { ...plan, best: null }, wind: { status: 'close' }, observed: null, cfg });
+  assert.deepEqual(keys(a), ['adv_rain', 'adv_backlit', 'adv_overcast', 'adv_eitherway', 'adv_nobest']);
+
+  // Clear midday: heat shimmer note.
+  a = advise({ hour: hour(clear, { az: 160, alt: 70 }, { rating: 'poor', lighting: 'front', delta: 20, blocked: 0.1 }), plan, wind: null, observed: null, cfg });
+  assert.ok(keys(a).includes('adv_shimmer'));
+  // Night: no light advice, no shimmer, no cloud advice.
+  a = advise({ hour: hour(clear, { az: 300, alt: -20 }, { rating: 'none', lighting: 'back', delta: 150, blocked: 0.1 }), plan, wind: null, observed: null, cfg });
+  assert.deepEqual(keys(a), ['adv_crisp', 'adv_night', 'adv_best']);
 });

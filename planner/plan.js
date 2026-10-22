@@ -9,8 +9,9 @@ import { lightScore, viewFor } from './light.js';
 const HOUR = 3600e3;
 
 // airport: from airports.js; runway: one of airport.runways; position: { lat, lon }
-// dayStart: midnight at the airport (ms); sunPos(t, lat, lon) and cloudsAt(t) are passed in.
-export function dayPlan({ airport, runway, position, dayStart, sunPos, cloudsAt, cfg }) {
+// dayStart: midnight at the airport (ms); sunPos(t, lat, lon) and weatherAt(t) are passed in.
+// weatherAt returns one forecast hour from Light Scout's wxFrom() ({ low, mid, high, vis, pp, code, ... }) or null.
+export function dayPlan({ airport, runway, position, dayStart, sunPos, weatherAt, cfg }) {
   const proj = makeProjection(airport.lat, airport.lon);
   const rel = runwayRelation(proj, runway, position.lat, position.lon);
   // Within this distance of the centre line beyond a runway end, planes pass (nearly) overhead.
@@ -33,11 +34,12 @@ export function dayPlan({ airport, runway, position, dayStart, sunPos, cloudsAt,
     const t = dayStart + i * HOUR;
     const mid = t + HOUR / 2; // judge each hour by its middle
     const sun = sunPos(mid, position.lat, position.lon);
-    const clouds = cloudsAt(mid);
+    const wx = weatherAt(mid);
+    const clouds = wx ? { low: wx.low, mid: wx.mid, high: wx.high } : null;
     // The side light is the same whichever way the planes fly (it depends on which side of the
     // runway you are); what changes per direction is whether you see the nose or the tail.
     const light = lightScore(sun, rel.planeToCameraDeg, clouds, cfg);
-    hours.push({ t, sun, clouds, light });
+    hours.push({ t, sun, clouds, wx, light });
   }
   return { rel, underPath, dirs, hours, best: bestWindow(hours) };
 }

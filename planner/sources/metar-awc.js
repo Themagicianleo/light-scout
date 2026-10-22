@@ -39,3 +39,23 @@ export async function latestMetar(icao) {
   try { data = JSON.parse(text); } catch { throw new SourceError('format', 'METAR answer was not JSON'); }
   return parseAwc(data);
 }
+
+// Observed conditions from the raw report (standard METAR groups), up to the first trend/remarks
+// group, so TEMPO/BECMG forecasts aren't mistaken for "now":
+//   visibility: 4 digits in metres (9999 = 10 km or more), CAVOK, or statute miles like 6SM
+//   cloud: FEW/SCT/BKN/OVC + height in hundreds of feet (+ CB/TCU); VV = sky hidden (fog)
+//   weather: e.g. -RA (light rain), TSRA (thunderstorm with rain), HZ (haze), BR (mist), FG (fog)
+const WX = /^(\+|-|VC)?(MI|BC|PR|DR|BL|SH|TS|FZ)?((?:DZ|RA|SN|SG|IC|PL|GR|GS|UP|BR|FG|FU|VA|DU|SA|HZ|PY|PO|SQ|FC|SS|DS)*)$/;
+export function parseConditions(raw) {
+  const out = { visibilityM: null, cavok: false, clouds: [], weather: [] };
+  for (const tok of String(raw ?? '').split(/\s+/).slice(2)) { // skip "METAR" and the station
+    if (/^(TEMPO|BECMG|NOSIG|RMK)$/.test(tok)) break;
+    let m;
+    if (tok === 'CAVOK') { out.cavok = true; out.visibilityM = 10000; }
+    else if (/^\d{4}$/.test(tok) && out.visibilityM === null) out.visibilityM = Number(tok) === 9999 ? 10000 : Number(tok);
+    else if ((m = /^(\d+)SM$/.exec(tok)) && out.visibilityM === null) out.visibilityM = Number(m[1]) * 1609;
+    else if ((m = /^(FEW|SCT|BKN|OVC|VV)(\d{3})(CB|TCU)?$/.exec(tok))) out.clouds.push({ cover: m[1], baseFt: Number(m[2]) * 100, type: m[3] ?? null });
+    else if (tok.length >= 2 && (m = WX.exec(tok)) && (m[2] || m[3])) out.weather.push(tok);
+  }
+  return out;
+}

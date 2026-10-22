@@ -43,3 +43,17 @@ details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
 .row.is-likely, tr.is-likely td { background: var(--gold-soft); }
 .row.is-likely { border-radius: 8px; }
 .pl-ac .name small { font-family: var(--f-mono); }
+
+/* conditions and suggestions */
+.pl-bar { cursor: pointer; }
+.pl-cond { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 520px) { .pl-cond { grid-template-columns: 1fr; } }
+.cl.pl-cl { grid-template-columns: 34px 1fr 36px; font-size: 12px; color: var(--muted); margin-top: 6px; gap: 6px 8px; }
+.cl.pl-cl b { height: 8px; }
+.cl.pl-cl .mono { text-align: right; }
+.pl-obs p { margin: 4px 0 0; font-size: 13px; }
+.pl-advice { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.pl-advice li { border-left: 3px solid currentColor; padding: 2px 0 2px 10px; }
+.pl-advice li b { color: var(--fg); font-weight: 600; display: block; }
+.pl-advice li small { color: var(--muted); font-size: 12.5px; display: block; }
+.pl-advice li.tone-info { color: var(--blue); }
