@@ -55,6 +55,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--blue); outl
 h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; font-weight: 700; }
 h2 { font-size: 18px; letter-spacing: -.01em; }
 
+/* tabs (Light / Plane spotting) */
+.view { display: flex; flex-direction: column; gap: 18px; }
+.tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: 12px; padding: 4px; background: var(--surface); }
+.tabs button { flex: 1; border: 0; background: none; border-radius: 9px; padding: 8px 10px; font-weight: 600; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--raised); color: var(--fg); }
+
 /* top bar */
 .top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .top .seg button { padding: 0 9px; height: 36px; font-size: 13px; }
@@ -195,6 +201,13 @@ footer a { color: var(--muted); }
     </button>
   </div>
 
+  <!-- Tabs. Hidden until planner/main.js loads (it isn't part of the single-file claude.ai preview). -->
+  <nav class="tabs" id="tabs" hidden role="tablist">
+    <button role="tab" id="tabLight" aria-selected="true" aria-controls="viewLight" data-i18n="tabLight">Light</button>
+    <button role="tab" id="tabPlanner" aria-selected="false" aria-controls="viewPlanner" data-i18n="tabPlanner">Plane spotting</button>
+  </nav>
+
+  <div class="view" id="viewLight" role="tabpanel" aria-labelledby="tabLight">
   <div class="place">
     <div class="place-main">
       <button class="place-name" id="placeBtn" aria-expanded="false" aria-controls="search"><span id="placeName">Loading…</span>
@@ -265,6 +278,11 @@ footer a { color: var(--muted); }
       <div class="stats" id="nightStats"></div>
     </div>
   </section>
+
+  </div><!-- /viewLight -->
+
+  <!-- Spotter's Light Planner: filled in by planner/ui.js -->
+  <div class="view" id="viewPlanner" role="tabpanel" aria-labelledby="tabPlanner" hidden></div>
 
   <footer>
     <div class="toggles">
@@ -442,7 +460,7 @@ const STR = {
     hzLight: "Light haze", hzLightN: "Softens far layers and can warm up sunrise and sunset color.",
     hzCrisp: "Crisp air", hzCrispN: "Long, sharp views. Good for distant peaks, skylines and telephoto landscapes.",
     phNew: "New moon", phWaxC: "Waxing crescent", phFirst: "First quarter", phWaxG: "Waxing gibbous", phFull: "Full moon", phWanG: "Waning gibbous", phLast: "Last quarter", phWanC: "Waning crescent",
-    cN: "N", cE: "E", cS: "S", cW: "W", langAria: "Language"
+    cN: "N", cE: "E", cS: "S", cW: "W", langAria: "Language", tabLight: "Light", tabPlanner: "Plane spotting"
   },
   zh: {
     install: "安装", installTitle: "将 Light Scout 安装到此设备", save: "收藏此地点", locateTitle: "使用我的位置",
@@ -497,7 +515,7 @@ const STR = {
     hzLight: "轻微霾", hzLightN: "柔化远景层次，能让日出日落的色彩更暖。",
     hzCrisp: "空气通透", hzCrispN: "视野远而清晰。适合拍远山、城市天际线和长焦风光。",
     phNew: "新月", phWaxC: "蛾眉月", phFirst: "上弦月", phWaxG: "盈凸月", phFull: "满月", phWanG: "亏凸月", phLast: "下弦月", phWanC: "残月",
-    cN: "北", cE: "东", cS: "南", cW: "西", langAria: "语言"
+    cN: "北", cE: "东", cS: "南", cW: "西", langAria: "语言", tabLight: "光线", tabPlanner: "拍飞机"
   }
 };
 const COMPASS_L = {
@@ -553,11 +571,11 @@ if (S.h12 === null) S.h12 = new Intl.DateTimeFormat(LOC(), { hour: "numeric" }).
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const tz = () => (S.place && validTz(S.place.tz)) ? S.place.tz : DEVICE_TZ;
-function fmtTime(t) {
+function fmtTime(t, zone) {
   if (t == null) return "—";
-  return new Intl.DateTimeFormat(LOC(), { hour: "numeric", minute: "2-digit", hour12: S.h12, timeZone: tz() }).format(new Date(t));
+  return new Intl.DateTimeFormat(LOC(), { hour: "numeric", minute: "2-digit", hour12: S.h12, timeZone: zone || tz() }).format(new Date(t));
 }
-function fmtHour(t) { return new Intl.DateTimeFormat(LOC(), { hour: "numeric", hour12: S.h12, timeZone: tz() }).format(new Date(t)); }
+function fmtHour(t, zone) { return new Intl.DateTimeFormat(LOC(), { hour: "numeric", hour12: S.h12, timeZone: zone || tz() }).format(new Date(t)); }
 function fmtDur(ms) {
   const m = Math.round(ms / MIN); if (m < 60) return tr("durM", { m });
   const h = Math.floor(m / 60), r = m % 60; return r ? tr("durHM", { h, m: r }) : tr("durH", { h });
@@ -567,18 +585,22 @@ const card = az => COMPASS_L[LANG][Math.round(az / 22.5) % 16];
 // ---------- weather ----------
 const WMO_EN = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Fog", 48: "Rime fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle", 56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain", 65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains", 80: "Showers", 81: "Showers", 82: "Heavy showers", 85: "Snow showers", 86: "Snow showers", 95: "Thunderstorm", 96: "Storm, hail", 99: "Storm, hail" };
 const wmo = c => (LANG === "zh" ? WMO_ZH : WMO_EN)[c];
+// Hourly Open-Meteo forecast for any point. Used by the Light view (loadWeather) and the planner.
+async function fetchForecast(lat, lng) {
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lng +
+    "&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_direction_10m,weather_code" +
+    "&timezone=auto&forecast_days=16&timeformat=unixtime&wind_speed_unit=kmh";
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  return r.json();
+}
 async function loadWeather() {
   const p = S.place; if (!p) return;
   const key = p.lat.toFixed(3) + "," + p.lng.toFixed(3);
   if (S.weatherFor === key && S.weather) return;
   S.weatherErr = null;
-  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + p.lat + "&longitude=" + p.lng +
-    "&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,visibility,wind_speed_10m,wind_direction_10m,weather_code" +
-    "&timezone=auto&forecast_days=16&timeformat=unixtime&wind_speed_unit=kmh";
   try {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error("HTTP " + r.status);
-    const j = await r.json();
+    const j = await fetchForecast(p.lat, p.lng);
     S.weather = j; S.weatherFor = key; S.weatherSavedAt = null;
     store.set("wx", { key, at: Date.now(), j });
     if (j.timezone && validTz(j.timezone) && S.place.tz !== j.timezone && S.place.tzGuess) { S.place.tz = j.timezone; S.place.tzGuess = false; store.set("place", S.place); }
@@ -635,8 +657,10 @@ function hazeRead(vis, aod) {
   return { label: tr("hzCrisp"), tone: "great", note: tr("hzCrispN") };
 }
 
-function wxAt(t) {
-  const w = S.weather; if (!w || !w.hourly) return null;
+const wxAt = t => wxFrom(S.weather, t);
+// One hour of a forecast (from fetchForecast) at time t, or null if t is outside it.
+function wxFrom(w, t) {
+  if (!w || !w.hourly) return null;
   const h = w.hourly, i = Math.round((t / 1000 - h.time[0]) / 3600);
   if (i < 0 || i >= h.time.length) return null;
   return { t: h.time[i] * 1000, temp: h.temperature_2m[i], rh: h.relative_humidity_2m[i], dew: h.dew_point_2m[i], pp: h.precipitation_probability[i] ?? 0,
@@ -1042,9 +1066,11 @@ $("uF").onclick = () => { S.units = "F"; store.set("units", "F"); syncToggles();
 $("h24").onclick = () => { S.h12 = false; store.set("h12", false); syncToggles(); render(); };
 $("h12").onclick = () => { S.h12 = true; store.set("h12", true); syncToggles(); render(); };
 syncToggles();
+const langListeners = [];
 function setLang(l) {
   LANG = l; store.set("lang", l);
   applyStatic(); paintNotice(); render();
+  langListeners.forEach(fn => fn(l));
   if (!$("search").hidden) { renderChips(); doSearch($("q").value); }
 }
 $("langEn").onclick = () => setLang("en");
@@ -1060,6 +1086,17 @@ else {
 }
 setInterval(() => { if (document.visibilityState === "visible") render(); }, 30000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") render(); });
+
+// ---------- shared with the Spotter's Light Planner (planner/*.js) ----------
+// The planner reuses these instead of having its own copies. Read-only access to state.
+window.LightScout = {
+  sunPos, store, esc, fmtTime, fmtHour, fmtDur, partsIn, zonedMidnight, ymdAdd, validTz, DEVICE_TZ,
+  fetchForecast, wxFrom, skyRead, wmo,
+  lang: () => LANG, loc: LOC, h12: () => S.h12, favs: () => S.favs.map(placeLabelFav),
+  onLang: fn => langListeners.push(fn), iOS, installable
+};
+function placeLabelFav(f) { return { name: placeLabel(f), lat: f.lat, lng: f.lng }; }
+document.dispatchEvent(new Event("lightscout-ready"));
 })();
 </script>
 
