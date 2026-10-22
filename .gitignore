@@ -1,0 +1,4 @@
+# Secrets never go in the repo. (The planner needs no keys today; this is here in case one is ever added.)
+.env
+.env.*
+node_modules/
