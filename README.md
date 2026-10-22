@@ -3,7 +3,7 @@
 A photographer's light planner in a single web page: blue and golden hour times, sunrise/sunset direction, a sky chart of the sun's path, an hourly cloud-layer forecast with a rough "sky color" read, moon phase, and tonight's darkest window.
 
 - Sun and moon math runs on the device (no network needed).
-- Forecast: [Open-Meteo](https://open-meteo.com) (free, no API key). Place search: Open-Meteo geocoding. "Locate" names your spot via BigDataCloud's free reverse geocoder.
+- Forecast and air quality (US AQI, PM2.5, PM10, aerosol haze; 5 days): [Open-Meteo](https://open-meteo.com) (free, no API key). Place search: Open-Meteo geocoding. "Locate" names your spot via BigDataCloud's free reverse geocoder.
 - Saved places, units and clock format are stored in the browser.
 
 ## Files

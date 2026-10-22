@@ -143,6 +143,11 @@ h2 { font-size: 18px; letter-spacing: -.01em; }
 .err { color: var(--muted); font-size: 14px; }
 
 /* night */
+.air-top { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.aqi { display: flex; align-items: baseline; gap: 8px; }
+.aqi .n { font-family: var(--f-display); font-size: 44px; font-weight: 700; letter-spacing: -.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.aqi .u { font-size: 12px; color: var(--muted); }
+.stats.four { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
 .night-wrap { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .moon { width: 84px; height: 84px; flex: none; }
 .night-wrap .stats { flex: 1 1 220px; }
@@ -220,6 +225,11 @@ footer a { color: var(--muted); }
     <section class="card" id="evening"></section>
   </div>
 
+  <section class="card" id="air">
+    <div class="card-head"><h2>Air &amp; visibility</h2><span class="label" id="airWhen"></span></div>
+    <div id="airBody"><div class="err">Loading air quality…</div></div>
+  </section>
+
   <section class="card">
     <div class="card-head"><h2>Sun direction</h2><span class="label" id="sunWhen"></span></div>
     <div class="sun-wrap">
@@ -246,7 +256,7 @@ footer a { color: var(--muted); }
       <div class="seg" role="group" aria-label="Temperature units"><button id="uC">°C · km/h</button><button id="uF">°F · mph</button></div>
       <div class="seg" role="group" aria-label="Clock"><button id="h24">24 h</button><button id="h12">12 h</button></div>
     </div>
-    <div>Blue hour: sun 4–6° below the horizon. Golden hour: sun from 4° below to 6° above. Sun and moon are calculated on your device; the forecast comes from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>. Sky ratings are a rough read of cloud layers, not a promise.</div>
+    <div>Blue hour: sun 4–6° below the horizon. Golden hour: sun from 4° below to 6° above. Sun and moon are calculated on your device; the forecast and air quality come from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CAMS data). AQI uses the US EPA scale. Sky ratings are a rough read of cloud layers, not a promise.</div>
   </footer>
 </div>
 
@@ -376,6 +386,7 @@ const S = {
   place: store.get("place", null),
   dayOffset: 0,
   weather: null, weatherFor: null, weatherErr: null,
+  air: null, airFor: null, airErr: null, airSavedAt: null,
   units: store.get("units", usLike ? "F" : "C"),
   h12: store.get("h12", null),
   favs: store.get("favs", [])
@@ -422,6 +433,51 @@ async function loadWeather() {
   render();
 }
 addEventListener("online", () => { if (S.weatherSavedAt || S.weatherErr) { S.weatherFor = null; loadWeather(); } });
+async function loadAir() {
+  const p = S.place; if (!p) return;
+  const key = p.lat.toFixed(3) + "," + p.lng.toFixed(3);
+  if (S.airFor === key && S.air) return;
+  S.airErr = null;
+  const url = "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=" + p.lat + "&longitude=" + p.lng +
+    "&hourly=us_aqi,pm2_5,pm10,aerosol_optical_depth,dust&timezone=auto&forecast_days=5&timeformat=unixtime";
+  try {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    S.air = await r.json(); S.airFor = key; S.airSavedAt = null;
+    store.set("aq", { key, at: Date.now(), j: S.air });
+  } catch (e) {
+    const saved = store.get("aq", null);
+    if (saved && saved.key === key) { S.air = saved.j; S.airFor = key; S.airSavedAt = saved.at; }
+    else { S.air = null; S.airErr = e; }
+  }
+  render();
+}
+addEventListener("online", () => { if (S.airSavedAt || S.airErr) { S.airFor = null; loadAir(); } });
+function airAt(t) {
+  const a = S.air; if (!a || !a.hourly) return null;
+  const h = a.hourly, i = Math.round((t / 1000 - h.time[0]) / 3600);
+  if (i < 0 || i >= h.time.length || h.us_aqi[i] == null) return null;
+  return { aqi: h.us_aqi[i], pm25: h.pm2_5[i], pm10: h.pm10[i], aod: h.aerosol_optical_depth[i], dust: h.dust[i] };
+}
+// US AQI bands (EPA)
+function aqiCat(v) {
+  if (v <= 50) return { label: "Good", tone: "good" };
+  if (v <= 100) return { label: "Moderate", tone: "meh" };
+  if (v <= 150) return { label: "Unhealthy for sensitive groups", tone: "bad" };
+  if (v <= 200) return { label: "Unhealthy", tone: "bad" };
+  if (v <= 300) return { label: "Very unhealthy", tone: "bad" };
+  return { label: "Hazardous", tone: "bad" };
+}
+// What visibility and aerosols do to a photo.
+function hazeRead(vis, aod) {
+  const km = vis == null ? null : vis / 1000;
+  if (km != null && km < 1) return { label: "Fog", tone: "meh", note: "Very short views. Moody, minimal scenes; distant subjects disappear." };
+  if ((km != null && km < 4) || (aod != null && aod > 0.6)) return { label: "Heavy haze", tone: "bad", note: "Low contrast and muted color. The sun may fade out before it reaches the horizon." };
+  if ((km != null && km < 10) || (aod != null && aod > 0.3)) return { label: "Hazy", tone: "meh", note: "Distant ridges fade into layers. The sun turns deep orange-red low in the sky." };
+  if ((km != null && km < 20) || (aod != null && aod > 0.12)) return { label: "Light haze", tone: "good", note: "Softens far layers and can warm up sunrise and sunset color." };
+  return { label: "Crisp air", tone: "great", note: "Long, sharp views. Good for distant peaks, skylines and telephoto landscapes." };
+}
+
 function wxAt(t) {
   const w = S.weather; if (!w || !w.hourly) return null;
   const h = w.hourly, i = Math.round((t / 1000 - h.time[0]) / 3600);
@@ -501,6 +557,7 @@ function render() {
   renderTimeline(D, isToday, now);
   renderPeriod($("morning"), "Morning", D, D.sunrise, "Sunrise", true);
   renderPeriod($("evening"), "Evening", D, D.sunset, "Sunset", false);
+  renderAir(D, isToday, now);
   renderSun(D, isToday, now);
   renderWeather(D, now);
   renderNight(D);
@@ -555,12 +612,16 @@ function renderPeriod(el, title, D, sunT, sunLabel, am) {
   items.sort((a, b) => a.t - b.t).forEach(i => rows += i.html);
   if (!rows) rows = '<div class="read">' + (D.noonAlt < -4 ? "The sun stays below the horizon all day." : D.minAlt > 6 ? "The sun stays high all day (midnight sun)." : "No twilight transition in this half of the day.") + '</div>';
   const goldSeg = (am ? D.amGold : D.pmGold)[0];
-  const w = goldSeg ? wxAt((goldSeg.start + goldSeg.end) / 2) : null, r = skyRead(w);
+  const gMid = goldSeg ? (goldSeg.start + goldSeg.end) / 2 : 0;
+  const w = goldSeg ? wxAt(gMid) : null, r = skyRead(w), aq = goldSeg ? airAt(gMid) : null;
+  const hz = w ? hazeRead(w.vis, aq && aq.aod) : null;
   let read = "";
   if (r) {
     read = '<div class="read"><span class="pill tone-' + r.tone + '">' + esc(r.label) + '</span><span>' + esc(r.note) + '</span>' +
       r.notes.map(n => '<span>' + esc(n) + '</span>').join("") +
-      '<span class="mono">Clouds L ' + w.low + '% · M ' + w.mid + '% · H ' + w.high + '% · rain ' + w.pp + '% · ' + tempU(w.temp) + '</span></div>';
+      (hz ? '<span>' + esc(hz.label) + ': ' + esc(hz.note) + '</span>' : "") +
+      '<span class="mono">Clouds L ' + w.low + '% · M ' + w.mid + '% · H ' + w.high + '% · rain ' + w.pp + '% · ' + tempU(w.temp) + '</span>' +
+      '<span class="mono">Visibility ' + visU(w.vis) + (aq ? ' · AQI ' + aq.aqi : "") + '</span></div>';
   } else if (goldSeg && S.weatherErr) read = '<div class="read">Forecast unavailable.</div>';
   else if (goldSeg && S.weather) read = '<div class="read">Beyond the 16-day forecast.</div>';
   el.innerHTML = '<div class="card-head"><h2>' + title + '</h2><span class="label">' + (sunT != null ? card(sunPos(sunT, S.place.lat, S.place.lng).az) + " horizon" : "") + '</span></div><div class="rows">' + rows + '</div>' + read;
@@ -642,11 +703,45 @@ function renderWeather(D, now) {
     html += '<div class="hour' + cls + nowCls + '"><span class="t">' + esc(fmtHour(t)) + '</span><span class="temp">' + tempU(w.temp) + '</span>' +
       '<span class="desc">' + esc(WMO[w.code] || "—") + (w.pp >= 20 ? " · " + w.pp + "%" : "") + '</span>' +
       '<div class="cl">' + bar("L", w.low) + bar("M", w.mid) + bar("H", w.high) + '</div>' +
-      '<span class="mini">' + windU(w.wind) + '</span><span class="mini">vis ' + visU(w.vis) + '</span></div>';
+      '<span class="mini">' + windU(w.wind) + '</span><span class="mini">vis ' + visU(w.vis) + '</span>' + (airAt(t) ? '<span class="mini">AQI ' + airAt(t).aqi + '</span>' : "") + '</div>';
   }
   el.innerHTML = html ? saved + '<div class="hours" id="hoursRow">' + html + '</div>' : '<div class="err">This day is beyond the 16-day forecast.</div>';
   const row = $("hoursRow"), nowEl = row && row.querySelector(".is-now, .is-golden");
   if (nowEl && row) row.scrollLeft = Math.max(0, nowEl.offsetLeft - row.offsetLeft - 8);
+}
+
+function renderAir(D, isToday, now) {
+  const el = $("airBody");
+  const t = isToday ? now : D.start + 12 * HOUR;
+  $("airWhen").textContent = isToday ? "Now" : "At midday";
+  const a = airAt(t), w = wxAt(t);
+  if (!a && !w) {
+    el.innerHTML = '<div class="err">' + (S.airErr && S.weatherErr ? "Air quality couldn't load. Check your connection, or open the hosted app if you're in the claude.ai preview."
+      : (S.air || S.airErr) ? "The air quality forecast covers the next 5 days." : "Loading air quality…") + '</div>';
+    return;
+  }
+  const stat = (l, v) => '<div class="stat"><div class="label">' + l + '</div><div class="v">' + v + '</div></div>';
+  const hz = hazeRead(w ? w.vis : null, a ? a.aod : null);
+  let top = "";
+  if (a) { const c = aqiCat(a.aqi); top += '<div class="aqi"><span class="n">' + a.aqi + '</span><span class="u">US AQI</span></div><span class="pill tone-' + c.tone + '">' + esc(c.label) + '</span>'; }
+  else top += '<span class="err">' + (S.airErr ? "Air quality couldn't load right now." : "The air quality forecast covers the next 5 days.") + '</span>';
+  let stats = "";
+  stats += stat("Visibility", w ? visU(w.vis) : "—");
+  if (a) {
+    stats += stat("PM2.5", Math.round(a.pm25) + " <small>µg/m³</small>");
+    stats += stat("PM10", Math.round(a.pm10) + " <small>µg/m³</small>");
+    stats += stat("Haze (AOD)", a.aod != null ? a.aod.toFixed(2) : "—");
+  }
+  let range = "";
+  if (S.air) {
+    let lo = null, hi = null;
+    for (let h = D.start; h < D.end; h += HOUR) { const x = airAt(h); if (x) { if (!lo || x.aqi < lo.aqi) lo = { ...x, t: h }; if (!hi || x.aqi > hi.aqi) hi = { ...x, t: h }; } }
+    if (lo && hi && hi.aqi !== lo.aqi) range = '<span class="mono">This day: AQI ' + lo.aqi + ' around ' + fmtHour(lo.t) + ', up to ' + hi.aqi + ' around ' + fmtHour(hi.t) + '</span>';
+  }
+  const saved = S.airSavedAt ? '<span>Offline. Showing air quality saved ' + new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: S.h12 }).format(new Date(S.airSavedAt)) + '.</span>' : "";
+  el.innerHTML = '<div class="air-top">' + top + '</div>' +
+    '<div class="stats four" style="margin-top:12px">' + stats + '</div>' +
+    '<div class="read" style="margin-top:12px"><span class="pill tone-' + hz.tone + '">' + esc(hz.label) + '</span><span>' + esc(hz.note) + '</span>' + range + saved + '</div>';
 }
 
 function phaseName(p) {
@@ -678,7 +773,8 @@ function setPlace(pl, opts = {}) {
   S.place = { name: pl.name, sub: pl.sub || "", lat: +pl.lat, lng: +pl.lng, tz: pl.tz && validTz(pl.tz) ? pl.tz : DEVICE_TZ, tzGuess: !(pl.tz && validTz(pl.tz)), example: !!opts.example };
   if (!opts.example) { store.set("place", S.place); notice(""); }
   S.weather = null; S.weatherFor = null; S.dayOffset = 0;
-  closeSearch(); render(); loadWeather();
+  S.air = null; S.airFor = null;
+  closeSearch(); render(); loadWeather(); loadAir();
 }
 function notice(msg) { const n = $("notice"); n.textContent = msg || ""; n.hidden = !msg; }
 function locate(silent) {
@@ -792,7 +888,7 @@ $("h12").onclick = () => { S.h12 = true; store.set("h12", true); syncToggles(); 
 syncToggles();
 
 // boot: saved place → else example place, then try device location quietly
-if (S.place) { render(); loadWeather(); }
+if (S.place) { render(); loadWeather(); loadAir(); }
 else {
   setPlace(PRESETS[0], { example: true });
   notice("Showing an example place. Tap Locate to use where you are, or tap the place name to search.");
