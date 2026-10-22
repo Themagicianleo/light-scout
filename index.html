@@ -24,8 +24,8 @@
   --gold: #f4a53c; --gold-soft: #f4a53c26; --blue: #5b84ff; --blue-soft: #5b84ff26;
   --b-night: #070914; --b-astro: #151b3c; --b-naut: #233066; --b-blue: #3b5fd6; --b-golden: #f0a03a; --b-day: #f6e7b8;
   --moon: #f1ead2; --moon-dark: #262c4d; --good: #57c98a; --meh: #d9b552; --bad: #ef6b6b;
-  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
-  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --f-body: "Figtree", system-ui, -apple-system, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
   --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   color-scheme: dark;
 }
@@ -56,7 +56,9 @@ h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; font-
 h2 { font-size: 18px; letter-spacing: -.01em; }
 
 /* top bar */
-.top { display: flex; align-items: center; gap: 10px; }
+.top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.top .seg button { padding: 0 9px; height: 36px; font-size: 13px; }
+@media (max-width: 480px) { .brand .brand-name { display: none; } }
 .brand { font-family: var(--f-display); font-weight: 700; font-size: 15px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; margin-right: auto; }
 .brand svg { width: 22px; height: 22px; }
 .iconbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; height: 38px; min-width: 38px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; }
@@ -177,18 +179,19 @@ footer a { color: var(--muted); }
   <div class="top">
     <div class="brand">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="14" r="5" fill="var(--gold)"/><path d="M2 17h20" stroke="var(--fg)" stroke-width="2" stroke-linecap="round"/><path d="M12 3v3M4.5 7l2 2M19.5 7l-2 2" stroke="var(--gold)" stroke-width="2" stroke-linecap="round"/></svg>
-      Light Scout
+      <span class="brand-name">Light Scout</span>
     </div>
-    <button class="iconbtn" id="installBtn" hidden title="Install Light Scout on this device">
+    <div class="seg" role="group" data-i18n-aria="langAria" aria-label="Language"><button id="langEn" lang="en">EN</button><button id="langZh" lang="zh-CN">中文</button></div>
+    <button class="iconbtn" id="installBtn" hidden data-i18n-title="installTitle" title="Install Light Scout on this device">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <span>Install</span>
+      <span data-i18n="install">Install</span>
     </button>
-    <button class="iconbtn" id="favBtn" aria-pressed="false" title="Save this place" aria-label="Save this place">
+    <button class="iconbtn" id="favBtn" aria-pressed="false" data-i18n-title="save" data-i18n-aria="save" title="Save this place" aria-label="Save this place">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" stroke-linejoin="round"/></svg>
     </button>
-    <button class="iconbtn" id="locBtn" title="Use my location">
+    <button class="iconbtn" id="locBtn" data-i18n-title="locateTitle" title="Use my location">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-      <span>Locate</span>
+      <span data-i18n="locate">Locate</span>
     </button>
   </div>
 
@@ -199,36 +202,36 @@ footer a { color: var(--muted); }
       <div class="place-meta"><span id="placeCoords" class="mono"></span><span id="placeTz"></span><span id="placeTag"></span></div>
     </div>
     <div class="clocks" aria-live="off">
-      <div class="clock"><span class="label">Local time</span><span class="v" id="clockLocal">—</span><small id="clockLocalSub"></small></div>
+      <div class="clock"><span class="label" data-i18n="localTime">Local time</span><span class="v" id="clockLocal">—</span><small id="clockLocalSub"></small></div>
       <div class="clock"><span class="label">UTC</span><span class="v" id="clockUtc">—</span><small id="clockUtcSub"></small></div>
     </div>
   </div>
   <div class="notice" id="notice" hidden></div>
 
   <div class="search" id="search" hidden>
-    <input id="q" type="search" placeholder="Search a place, or paste coordinates like 36.1, -112.1" autocomplete="off" aria-label="Search location">
+    <input id="q" type="search" data-i18n-ph="searchPh" data-i18n-aria="searchAria" placeholder="Search a place, or paste coordinates like 36.1, -112.1" autocomplete="off" aria-label="Search location">
     <div class="results" id="results"></div>
-    <div id="favWrap" hidden><div class="label">Saved places</div><div class="chips" id="favs" style="margin-top:6px"></div></div>
-    <div><div class="label">Ideas</div><div class="chips" id="presets" style="margin-top:6px"></div></div>
+    <div id="favWrap" hidden><div class="label" data-i18n="saved">Saved places</div><div class="chips" id="favs" style="margin-top:6px"></div></div>
+    <div><div class="label" data-i18n="ideas">Ideas</div><div class="chips" id="presets" style="margin-top:6px"></div></div>
   </div>
 
   <div class="daynav">
-    <button class="iconbtn" id="prevDay" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button class="iconbtn" id="prevDay" data-i18n-aria="prevDay" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 6l-6 6 6 6"/></svg></button>
     <div class="day" id="dayLabel"></div>
-    <button class="iconbtn" id="todayBtn">Today</button>
-    <button class="iconbtn" id="nextDay" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button class="iconbtn" id="todayBtn" data-i18n="today">Today</button>
+    <button class="iconbtn" id="nextDay" data-i18n-aria="nextDay" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg></button>
   </div>
 
   <section class="next" id="next" aria-live="polite"></section>
 
-  <section class="tl" aria-label="Light through the day">
+  <section class="tl" data-i18n-aria="lightDay" aria-label="Light through the day">
     <div class="tl-bar" id="tlBar"></div>
-    <div class="tl-clouds" id="tlClouds" title="Cloud cover by hour"></div>
+    <div class="tl-clouds" id="tlClouds" data-i18n-title="cloudByHour" title="Cloud cover by hour"></div>
     <div class="tl-ticks" id="tlTicks"></div>
     <div class="legend">
-      <span><i class="b-night"></i>Night</span><span><i class="b-astro"></i>Astro twilight</span><span><i class="b-nautical"></i>Nautical</span>
-      <span><i class="b-blue"></i>Blue hour</span><span><i class="b-golden"></i>Golden hour</span><span><i class="b-day"></i>Daylight</span>
-      <span>▮ thin bar = cloud cover</span>
+      <span><i class="b-night"></i><span data-i18n="night">Night</span></span><span><i class="b-astro"></i><span data-i18n="legAstro">Astro twilight</span></span><span><i class="b-nautical"></i><span data-i18n="legNautical">Nautical</span></span>
+      <span><i class="b-blue"></i><span data-i18n="blue">Blue hour</span></span><span><i class="b-golden"></i><span data-i18n="golden">Golden hour</span></span><span><i class="b-day"></i><span data-i18n="day">Daylight</span></span>
+      <span data-i18n="legCloud">▮ thin bar = cloud cover</span>
     </div>
   </section>
 
@@ -238,37 +241,37 @@ footer a { color: var(--muted); }
   </div>
 
   <section class="card" id="air">
-    <div class="card-head"><h2>Air &amp; visibility</h2><span class="label" id="airWhen"></span></div>
-    <div id="airBody"><div class="err">Loading air quality…</div></div>
+    <div class="card-head"><h2 data-i18n="airTitle">Air &amp; visibility</h2><span class="label" id="airWhen"></span></div>
+    <div id="airBody"><div class="err" data-i18n="airLoading">Loading air quality…</div></div>
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Sun direction</h2><span class="label" id="sunWhen"></span></div>
+    <div class="card-head"><h2 data-i18n="sunTitle">Sun direction</h2><span class="label" id="sunWhen"></span></div>
     <div class="sun-wrap">
-      <svg class="compass" id="compass" viewBox="-140 -140 280 280" role="img" aria-label="Sky chart of the sun's path"></svg>
+      <svg class="compass" id="compass" viewBox="-140 -140 280 280" role="img" data-i18n-aria="skyChart" aria-label="Sky chart of the sun's path"></svg>
       <div class="stats" id="sunStats"></div>
     </div>
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Hourly sky</h2><span class="label">Clouds: low / mid / high</span></div>
-    <div id="weather"><div class="err">Loading forecast…</div></div>
+    <div class="card-head"><h2 data-i18n="hourlyTitle">Hourly sky</h2><span class="label" data-i18n="cloudLayers">Clouds: low / mid / high</span></div>
+    <div id="weather"><div class="err" data-i18n="wxLoading">Loading forecast…</div></div>
   </section>
 
   <section class="card">
-    <div class="card-head"><h2>Night sky</h2><span class="label">For astro and moon shots</span></div>
+    <div class="card-head"><h2 data-i18n="nightTitle">Night sky</h2><span class="label" data-i18n="nightSub">For astro and moon shots</span></div>
     <div class="night-wrap">
-      <svg class="moon" id="moonSvg" viewBox="-50 -50 100 100" role="img" aria-label="Moon phase"></svg>
+      <svg class="moon" id="moonSvg" viewBox="-50 -50 100 100" role="img" data-i18n-aria="moonPhase" aria-label="Moon phase"></svg>
       <div class="stats" id="nightStats"></div>
     </div>
   </section>
 
   <footer>
     <div class="toggles">
-      <div class="seg" role="group" aria-label="Temperature units"><button id="uC">°C · km/h</button><button id="uF">°F · mph</button></div>
-      <div class="seg" role="group" aria-label="Clock"><button id="h24">24 h</button><button id="h12">12 h</button></div>
+      <div class="seg" role="group" data-i18n-aria="unitsAria" aria-label="Temperature units"><button id="uC">°C · km/h</button><button id="uF">°F · mph</button></div>
+      <div class="seg" role="group" data-i18n-aria="clockAria" aria-label="Clock"><button id="h24">24 h</button><button id="h12">12 h</button></div>
     </div>
-    <div>Blue hour: sun 4–6° below the horizon. Golden hour: sun from 4° below to 6° above. Sun and moon are calculated on your device; the forecast and air quality come from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CAMS data). AQI uses the US EPA scale. Sky ratings are a rough read of cloud layers, not a promise.</div>
+    <div data-i18n-html="footer">Blue hour: sun 4–6° below the horizon. Golden hour: sun from 4° below to 6° above. Sun and moon are calculated on your device; the forecast and air quality come from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CAMS data). AQI uses the US EPA scale. Sky ratings are a rough read of cloud layers, not a promise.</div>
   </footer>
 </div>
 
@@ -310,12 +313,12 @@ function moonIllum(t) {
 }
 
 const BANDS = [
-  { k: "night", min: -91, max: -18, label: "Night" },
-  { k: "astro", min: -18, max: -12, label: "Astronomical twilight" },
-  { k: "nautical", min: -12, max: -6, label: "Nautical twilight" },
-  { k: "blue", min: -6, max: -4, label: "Blue hour" },
-  { k: "golden", min: -4, max: 6, label: "Golden hour" },
-  { k: "day", min: 6, max: 91, label: "Daylight" }
+  { k: "night", min: -91, max: -18 },
+  { k: "astro", min: -18, max: -12 },
+  { k: "nautical", min: -12, max: -6 },
+  { k: "blue", min: -6, max: -4 },
+  { k: "golden", min: -4, max: 6 },
+  { k: "day", min: 6, max: 91 }
 ];
 const bandIdx = a => { for (let i = BANDS.length - 1; i >= 0; i--) if (a >= BANDS[i].min) return i; return 0; };
 const cross = (t0, a0, t1, a1, thr) => t0 + (thr - a0) / (a1 - a0) * (t1 - t0);
@@ -384,15 +387,157 @@ const store = {
   set(k, v) { try { localStorage.setItem("ls:" + k, JSON.stringify(v)); } catch {} }
 };
 
+// ---------- language ----------
+const STR = {
+  en: {
+    install: "Install", installTitle: "Install Light Scout on this device", save: "Save this place", locateTitle: "Use my location",
+    locate: "Locate", locating: "Locating…", loading: "Loading…", localTime: "Local time",
+    searchPh: "Search a place, or paste coordinates like 36.1, -112.1", searchAria: "Search location", saved: "Saved places", ideas: "Ideas",
+    prevDay: "Previous day", nextDay: "Next day", today: "Today", tomorrow: "Tomorrow", yesterday: "Yesterday", inDays: "in {n} days", daysAgo: "{n} days ago",
+    lightDay: "Light through the day", cloudByHour: "Cloud cover by hour",
+    night: "Night", astro: "Astronomical twilight", nautical: "Nautical twilight", blue: "Blue hour", golden: "Golden hour", day: "Daylight",
+    legAstro: "Astro twilight", legNautical: "Nautical", legCloud: "▮ thin bar = cloud cover",
+    airTitle: "Air & visibility", sunTitle: "Sun direction", skyChart: "Sky chart of the sun's path", hourlyTitle: "Hourly sky", cloudLayers: "Clouds: low / mid / high",
+    nightTitle: "Night sky", nightSub: "For astro and moon shots", moonPhase: "Moon phase", unitsAria: "Temperature units", clockAria: "Clock",
+    footer: 'Blue hour: sun 4–6° below the horizon. Golden hour: sun from 4° below to 6° above. Sun and moon are calculated on your device; the forecast and air quality come from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> (CAMS data). AQI uses the US EPA scale. Sky ratings are a rough read of cloud layers, not a promise.',
+    durM: "{m} min", durH: "{h} h", durHM: "{h} h {m} min",
+    devTz: " (device time zone)", example: "Example place", myLocation: "My location",
+    nextLight: "Next light", happening: "Happening now", morning: "Morning", evening: "Evening",
+    noTwilightBig: "No golden or blue hour", polar: "The sun stays far from the horizon here for the next few days (polar day or night).",
+    nowBig: "{name} now", inBig: "{name} in {d}", left: "{d} left", long: "{d} long", tomorrowPre: "Tomorrow ",
+    belowAllDay: "The sun stays below the horizon all day.", highAllDay: "The sun stays high all day (midnight sun).", noTransition: "No twilight transition in this half of the day.",
+    cloudsLine: "Clouds L {l}% · M {m}% · H {h}% · rain {p}%", visLine: "Visibility {v}", fcUnavail: "Forecast unavailable.", beyond16: "Beyond the 16-day forecast.",
+    horizon: "{d} horizon", sunrise: "Sunrise", sunset: "Sunset", azimuthOf: "Azimuth {a}° {d}",
+    nowAt: "Now · {t}", pathDay: "Path for this day", azimuth: "Azimuth", elevation: "Elevation", shadows: "Shadows", xHeight: "× height", sunDown: "Sun down",
+    lightNow: "Light now", solarNoon: "Solar noon", degHigh: "{a}° high", dayLength: "Day length",
+    wxErr: "The forecast couldn't load. If you're viewing this inside the claude.ai preview, outside network requests are blocked there; open the hosted copy of Light Scout for live weather. Otherwise check your connection and refresh.",
+    wxLoading: "Loading forecast…", wxSaved: "You're offline. Showing the forecast saved {d}.", barL: "L", barM: "M", barH: "H", visShort: "vis", beyond16Day: "This day is beyond the 16-day forecast.",
+    now: "Now", midday: "At midday", airErrBoth: "Air quality couldn't load. Check your connection, or open the hosted app if you're in the claude.ai preview.",
+    air5: "The air quality forecast covers the next 5 days.", airLoading: "Loading air quality…", airErr: "Air quality couldn't load right now.", usAqi: "US AQI",
+    visibility: "Visibility", haze: "Haze (AOD)", airRange: "This day: AQI {lo} around {lt}, up to {hi} around {ht}", airSaved: "Offline. Showing air quality saved {d}.",
+    lit: "lit", moonRiseSet: "Moonrise / set", darkest: "Darkest window tonight", noSunMoon: "{d}, no sun or moon",
+    noDark: "None tonight. The moon is up through astronomical darkness, or the sky never gets fully dark.",
+    useCoords: "Use these coordinates", searching: "Searching…", noPlaces: "No places found. Try a nearby town, or paste coordinates.",
+    searchOffline: "Search is offline here. Paste coordinates (like 36.06, -112.14) or pick an idea below.",
+    nExample: "Showing an example place. Tap Locate to use where you are, or tap the place name to search.",
+    nPreview: "Location is blocked inside the claude.ai preview. Open the app at themagicianleo.github.io/light-scout to use where you are.",
+    nHttps: "Location needs the secure (https) address: themagicianleo.github.io/light-scout. You can also search for a place.",
+    nDeniedIos: "Location permission is off. Turn it on in Settings → Privacy & Security → Location Services → Safari Websites (or Light Scout) → While Using the App, then tap Locate. Or search for a place.",
+    nDenied: "Location permission is off for this site. Tap the icon to the left of the address bar (or long-press the app icon → App info) → Permissions → Location → Allow, then tap Locate. Or search for a place.",
+    nTimeout: "Finding your location took too long. Make sure Location (GPS) is switched on, move near a window or outside, then tap Locate again. Or search for a place.",
+    nUnavail: "Your phone couldn't work out where you are. Switch on Location (GPS) in your phone's settings, then tap Locate. Or search for a place.",
+    nGps: "Still looking. Trying GPS, which can take up to 30 seconds…",
+    nInstallIos: "To install: tap the Share button in Safari's toolbar, then Add to Home Screen.", nInstall: "To install: open your browser menu and choose Install app or Add to Home screen.",
+    fogNote: "Mist or fog possible (air near saturation, light wind).",
+    rain: "Rain likely", rainN: "Watch for breaks; light after a passing shower can be dramatic.",
+    lowCloud: "Low cloud blocking", lowCloudN: "A thick low deck will likely hide the sun near the horizon.",
+    colorful: "Colorful sky possible", colorfulN: "Mid and high cloud can catch color while the horizon stays open.",
+    clear: "Clear sky", clearN: "Clean, warm light with a plain sky. Good for landscapes with strong foregrounds.",
+    overcast: "Mostly overcast", overcastN: "Soft, flat light. Fine for portraits, little sky color.",
+    mixed: "Mixed clouds", mixedN: "Some texture in the sky; color depends on gaps near the horizon.",
+    aqGood: "Good", aqMod: "Moderate", aqUsg: "Unhealthy for sensitive groups", aqUnh: "Unhealthy", aqVery: "Very unhealthy", aqHaz: "Hazardous",
+    hzFog: "Fog", hzFogN: "Very short views. Moody, minimal scenes; distant subjects disappear.",
+    hzHeavy: "Heavy haze", hzHeavyN: "Low contrast and muted color. The sun may fade out before it reaches the horizon.",
+    hzHazy: "Hazy", hzHazyN: "Distant ridges fade into layers. The sun turns deep orange-red low in the sky.",
+    hzLight: "Light haze", hzLightN: "Softens far layers and can warm up sunrise and sunset color.",
+    hzCrisp: "Crisp air", hzCrispN: "Long, sharp views. Good for distant peaks, skylines and telephoto landscapes.",
+    phNew: "New moon", phWaxC: "Waxing crescent", phFirst: "First quarter", phWaxG: "Waxing gibbous", phFull: "Full moon", phWanG: "Waning gibbous", phLast: "Last quarter", phWanC: "Waning crescent",
+    cN: "N", cE: "E", cS: "S", cW: "W", langAria: "Language"
+  },
+  zh: {
+    install: "安装", installTitle: "将 Light Scout 安装到此设备", save: "收藏此地点", locateTitle: "使用我的位置",
+    locate: "定位", locating: "定位中…", loading: "加载中…", localTime: "当地时间",
+    searchPh: "搜索地点，或粘贴坐标，如 36.1, -112.1", searchAria: "搜索地点", saved: "已收藏地点", ideas: "推荐地点",
+    prevDay: "前一天", nextDay: "后一天", today: "今天", tomorrow: "明天", yesterday: "昨天", inDays: "{n} 天后", daysAgo: "{n} 天前",
+    lightDay: "全天光线", cloudByHour: "逐小时云量",
+    night: "夜晚", astro: "天文晨昏蒙影", nautical: "航海晨昏蒙影", blue: "蓝调时刻", golden: "黄金时刻", day: "白天",
+    legAstro: "天文暮光", legNautical: "航海暮光", legCloud: "▮ 细条 = 云量",
+    airTitle: "空气与能见度", sunTitle: "太阳方位", skyChart: "太阳轨迹星空图", hourlyTitle: "逐小时天空", cloudLayers: "云量：低 / 中 / 高",
+    nightTitle: "夜空", nightSub: "适合星空与月亮拍摄", moonPhase: "月相", unitsAria: "温度单位", clockAria: "时钟",
+    footer: '蓝调时刻：太阳位于地平线下 4–6°。黄金时刻：太阳从地平线下 4° 到地平线上 6°。太阳和月亮数据在你的设备上计算；天气预报和空气质量来自 <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>（CAMS 数据）。AQI 采用美国 EPA 标准。天空评级只是根据云层的粗略判断，不作保证。',
+    durM: "{m} 分钟", durH: "{h} 小时", durHM: "{h} 小时 {m} 分钟",
+    devTz: "（设备时区）", example: "示例地点", myLocation: "我的位置",
+    nextLight: "下一段好光线", happening: "正在进行", morning: "早晨", evening: "傍晚",
+    noTwilightBig: "没有黄金或蓝调时刻", polar: "接下来几天这里的太阳都远离地平线（极昼或极夜）。",
+    nowBig: "{name}进行中", inBig: "{d}后{name}", left: "剩余 {d}", long: "持续 {d}", tomorrowPre: "明天 ",
+    belowAllDay: "太阳全天都在地平线以下。", highAllDay: "太阳全天都很高（极昼）。", noTransition: "这半天没有晨昏过渡。",
+    cloudsLine: "云量 低 {l}% · 中 {m}% · 高 {h}% · 降水 {p}%", visLine: "能见度 {v}", fcUnavail: "预报暂不可用。", beyond16: "超出 16 天预报范围。",
+    horizon: "{d}方向", sunrise: "日出", sunset: "日落", azimuthOf: "方位角 {a}° {d}",
+    nowAt: "现在 · {t}", pathDay: "当天太阳轨迹", azimuth: "方位角", elevation: "高度角", shadows: "影长", xHeight: "× 物高", sunDown: "太阳已落",
+    lightNow: "当前光线", solarNoon: "正午", degHigh: "高 {a}°", dayLength: "日照时长",
+    wxErr: "预报无法加载。如果你在 claude.ai 预览中查看，那里会拦截外部网络请求；请打开托管版 Light Scout 查看实时天气。否则请检查网络后刷新。",
+    wxLoading: "正在加载预报…", wxSaved: "当前离线，显示 {d} 保存的预报。", barL: "低", barM: "中", barH: "高", visShort: "能见", beyond16Day: "这一天超出 16 天预报范围。",
+    now: "现在", midday: "正午时分", airErrBoth: "空气质量无法加载。请检查网络；如果你在 claude.ai 预览中，请打开托管版应用。",
+    air5: "空气质量预报只覆盖未来 5 天。", airLoading: "正在加载空气质量…", airErr: "暂时无法加载空气质量。", usAqi: "美国 AQI",
+    visibility: "能见度", haze: "霾 (AOD)", airRange: "当天：{lt}前后 AQI {lo}，最高 {hi}（{ht}前后）", airSaved: "当前离线，显示 {d} 保存的空气质量。",
+    lit: "被照亮", moonRiseSet: "月出 / 月落", darkest: "今晚最暗时段", noSunMoon: "{d}，无日无月",
+    noDark: "今晚没有。天文黑夜期间月亮在天上，或者天空无法完全变暗。",
+    useCoords: "使用这些坐标", searching: "搜索中…", noPlaces: "未找到地点。试试附近的城镇，或粘贴坐标。",
+    searchOffline: "当前无法搜索。请粘贴坐标（如 36.06, -112.14），或从下方选择推荐地点。",
+    nExample: "当前显示的是示例地点。点“定位”使用你所在的位置，或点地点名称进行搜索。",
+    nPreview: "claude.ai 预览中无法使用定位。请打开 themagicianleo.github.io/light-scout 使用你的位置。",
+    nHttps: "定位需要安全（https）地址：themagicianleo.github.io/light-scout。也可以搜索地点。",
+    nDeniedIos: "定位权限已关闭。请在 设置 → 隐私与安全性 → 定位服务 → Safari 网站（或 Light Scout）→ 使用 App 期间 中开启，然后点“定位”。也可以搜索地点。",
+    nDenied: "此网站的定位权限已关闭。点地址栏左侧的图标（或长按应用图标 → 应用信息）→ 权限 → 位置信息 → 允许，然后点“定位”。也可以搜索地点。",
+    nTimeout: "定位超时。请确认已开启定位（GPS），靠近窗户或到户外，然后再点“定位”。也可以搜索地点。",
+    nUnavail: "手机无法确定你的位置。请在手机设置中开启定位（GPS），然后点“定位”。也可以搜索地点。",
+    nGps: "还在定位，正在尝试 GPS，最多需要 30 秒…",
+    nInstallIos: "安装方法：点 Safari 工具栏中的分享按钮，然后选择“添加到主屏幕”。", nInstall: "安装方法：打开浏览器菜单，选择“安装应用”或“添加到主屏幕”。",
+    fogNote: "可能有轻雾或雾（空气接近饱和，风小）。",
+    rain: "可能下雨", rainN: "留意云层间隙；阵雨过后的光线可能很有戏剧性。",
+    lowCloud: "低云遮挡", lowCloudN: "厚厚的低云层很可能在地平线附近挡住太阳。",
+    colorful: "可能出现彩霞", colorfulN: "中高云能映出色彩，同时地平线附近保持通透。",
+    clear: "晴空", clearN: "光线干净温暖，天空较单调。适合有强前景的风光。",
+    overcast: "大部阴天", overcastN: "光线柔和平淡。适合人像，天空色彩少。",
+    mixed: "云量适中", mixedN: "天空有些层次；色彩取决于地平线附近的云隙。",
+    aqGood: "良好", aqMod: "中等", aqUsg: "对敏感人群不健康", aqUnh: "不健康", aqVery: "非常不健康", aqHaz: "危险",
+    hzFog: "雾", hzFogN: "能见度很短。适合氛围感、极简的画面；远处景物会消失。",
+    hzHeavy: "重度霾", hzHeavyN: "反差低、色彩发灰。太阳可能在落到地平线前就消失。",
+    hzHazy: "有霾", hzHazyN: "远山被雾气分出层次。太阳在低空时会变成深橙红色。",
+    hzLight: "轻微霾", hzLightN: "柔化远景层次，能让日出日落的色彩更暖。",
+    hzCrisp: "空气通透", hzCrispN: "视野远而清晰。适合拍远山、城市天际线和长焦风光。",
+    phNew: "新月", phWaxC: "蛾眉月", phFirst: "上弦月", phWaxG: "盈凸月", phFull: "满月", phWanG: "亏凸月", phLast: "下弦月", phWanC: "残月",
+    cN: "北", cE: "东", cS: "南", cW: "西", langAria: "语言"
+  }
+};
+const COMPASS_L = {
+  en: ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
+  zh: ["北", "东北偏北", "东北", "东北偏东", "东", "东南偏东", "东南", "东南偏南", "南", "西南偏南", "西南", "西南偏西", "西", "西北偏西", "西北", "西北偏北"]
+};
+const WMO_ZH = { 0: "晴", 1: "大部晴朗", 2: "局部多云", 3: "阴", 45: "雾", 48: "雾凇", 51: "小毛毛雨", 53: "毛毛雨", 55: "大毛毛雨", 56: "冻毛毛雨", 57: "冻毛毛雨", 61: "小雨", 63: "中雨", 65: "大雨", 66: "冻雨", 67: "冻雨", 71: "小雪", 73: "中雪", 75: "大雪", 77: "米雪", 80: "阵雨", 81: "阵雨", 82: "强阵雨", 85: "阵雪", 86: "阵雪", 95: "雷暴", 96: "雷暴伴冰雹", 99: "雷暴伴冰雹" };
+let LANG = store.get("lang", null) || (/^zh/i.test(navigator.language || "") ? "zh" : "en");
+const LOC = () => LANG === "zh" ? "zh-CN" : "en";
+function tr(k, v) {
+  let s = STR[LANG][k] ?? STR.en[k] ?? k;
+  if (v) s = s.replace(/\{(\w+)\}/g, (_, n) => v[n]);
+  return s;
+}
+function applyStatic() {
+  document.documentElement.lang = LOC();
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = tr(el.dataset.i18nHtml); });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = tr(el.dataset.i18nPh); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = tr(el.dataset.i18nTitle); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(el => { el.setAttribute("aria-label", tr(el.dataset.i18nAria)); });
+  $("langEn").setAttribute("aria-pressed", LANG === "en"); $("langZh").setAttribute("aria-pressed", LANG === "zh");
+}
+
 // ---------- state ----------
 const PRESETS = [
-  { name: "Yosemite Valley", sub: "California, US", lat: 37.7456, lng: -119.5936, tz: "America/Los_Angeles" },
-  { name: "Reine, Lofoten", sub: "Norway", lat: 67.9324, lng: 13.089, tz: "Europe/Oslo" },
-  { name: "Kyoto", sub: "Japan", lat: 35.0116, lng: 135.7681, tz: "Asia/Tokyo" },
-  { name: "Reykjavík", sub: "Iceland", lat: 64.1466, lng: -21.9426, tz: "Atlantic/Reykjavik" },
-  { name: "Cape Town", sub: "South Africa", lat: -33.9249, lng: 18.4241, tz: "Africa/Johannesburg" },
-  { name: "New York", sub: "New York, US", lat: 40.7128, lng: -74.006, tz: "America/New_York" }
+  { name: "Yosemite Valley", zh: "优胜美地山谷", sub: "California, US", lat: 37.7456, lng: -119.5936, tz: "America/Los_Angeles" },
+  { name: "Reine, Lofoten", zh: "罗弗敦群岛·雷讷", sub: "Norway", lat: 67.9324, lng: 13.089, tz: "Europe/Oslo" },
+  { name: "Kyoto", zh: "京都", sub: "Japan", lat: 35.0116, lng: 135.7681, tz: "Asia/Tokyo" },
+  { name: "Reykjavík", zh: "雷克雅未克", sub: "Iceland", lat: 64.1466, lng: -21.9426, tz: "Atlantic/Reykjavik" },
+  { name: "Cape Town", zh: "开普敦", sub: "South Africa", lat: -33.9249, lng: 18.4241, tz: "Africa/Johannesburg" },
+  { name: "New York", zh: "纽约", sub: "New York, US", lat: 40.7128, lng: -74.006, tz: "America/New_York" }
 ];
+PRESETS.forEach((p, i) => p.pid = i);
+// Preset and unnamed places follow the language; searched names stay as found.
+function placeLabel(p) {
+  if (p.pid != null && PRESETS[p.pid]) return LANG === "zh" ? PRESETS[p.pid].zh : PRESETS[p.pid].name;
+  if (p.mine) return tr("myLocation");
+  return p.name;
+}
 const usLike = /^en-(US|LR|MM)$/.test(navigator.language || "");
 const S = {
   place: store.get("place", null),
@@ -403,25 +548,25 @@ const S = {
   h12: store.get("h12", null),
   favs: store.get("favs", [])
 };
-if (S.h12 === null) S.h12 = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hour12 ?? false;
+if (S.h12 === null) S.h12 = new Intl.DateTimeFormat(LOC(), { hour: "numeric" }).resolvedOptions().hour12 ?? false;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const tz = () => (S.place && validTz(S.place.tz)) ? S.place.tz : DEVICE_TZ;
 function fmtTime(t) {
   if (t == null) return "—";
-  return new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", hour12: S.h12, timeZone: tz() }).format(new Date(t));
+  return new Intl.DateTimeFormat(LOC(), { hour: "numeric", minute: "2-digit", hour12: S.h12, timeZone: tz() }).format(new Date(t));
 }
-function fmtHour(t) { return new Intl.DateTimeFormat(undefined, { hour: "numeric", hour12: S.h12, timeZone: tz() }).format(new Date(t)); }
+function fmtHour(t) { return new Intl.DateTimeFormat(LOC(), { hour: "numeric", hour12: S.h12, timeZone: tz() }).format(new Date(t)); }
 function fmtDur(ms) {
-  const m = Math.round(ms / MIN); if (m < 60) return m + " min";
-  const h = Math.floor(m / 60), r = m % 60; return h + " h" + (r ? " " + r + " min" : "");
+  const m = Math.round(ms / MIN); if (m < 60) return tr("durM", { m });
+  const h = Math.floor(m / 60), r = m % 60; return r ? tr("durHM", { h, m: r }) : tr("durH", { h });
 }
-const COMPASS = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-const card = az => COMPASS[Math.round(az / 22.5) % 16];
+const card = az => COMPASS_L[LANG][Math.round(az / 22.5) % 16];
 
 // ---------- weather ----------
-const WMO = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Fog", 48: "Rime fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle", 56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain", 65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains", 80: "Showers", 81: "Showers", 82: "Heavy showers", 85: "Snow showers", 86: "Snow showers", 95: "Thunderstorm", 96: "Storm, hail", 99: "Storm, hail" };
+const WMO_EN = { 0: "Clear", 1: "Mostly clear", 2: "Partly cloudy", 3: "Overcast", 45: "Fog", 48: "Rime fog", 51: "Light drizzle", 53: "Drizzle", 55: "Heavy drizzle", 56: "Freezing drizzle", 57: "Freezing drizzle", 61: "Light rain", 63: "Rain", 65: "Heavy rain", 66: "Freezing rain", 67: "Freezing rain", 71: "Light snow", 73: "Snow", 75: "Heavy snow", 77: "Snow grains", 80: "Showers", 81: "Showers", 82: "Heavy showers", 85: "Snow showers", 86: "Snow showers", 95: "Thunderstorm", 96: "Storm, hail", 99: "Storm, hail" };
+const wmo = c => (LANG === "zh" ? WMO_ZH : WMO_EN)[c];
 async function loadWeather() {
   const p = S.place; if (!p) return;
   const key = p.lat.toFixed(3) + "," + p.lng.toFixed(3);
@@ -473,21 +618,21 @@ function airAt(t) {
 }
 // US AQI bands (EPA)
 function aqiCat(v) {
-  if (v <= 50) return { label: "Good", tone: "good" };
-  if (v <= 100) return { label: "Moderate", tone: "meh" };
-  if (v <= 150) return { label: "Unhealthy for sensitive groups", tone: "bad" };
-  if (v <= 200) return { label: "Unhealthy", tone: "bad" };
-  if (v <= 300) return { label: "Very unhealthy", tone: "bad" };
-  return { label: "Hazardous", tone: "bad" };
+  if (v <= 50) return { label: tr("aqGood"), tone: "good" };
+  if (v <= 100) return { label: tr("aqMod"), tone: "meh" };
+  if (v <= 150) return { label: tr("aqUsg"), tone: "bad" };
+  if (v <= 200) return { label: tr("aqUnh"), tone: "bad" };
+  if (v <= 300) return { label: tr("aqVery"), tone: "bad" };
+  return { label: tr("aqHaz"), tone: "bad" };
 }
 // What visibility and aerosols do to a photo.
 function hazeRead(vis, aod) {
   const km = vis == null ? null : vis / 1000;
-  if (km != null && km < 1) return { label: "Fog", tone: "meh", note: "Very short views. Moody, minimal scenes; distant subjects disappear." };
-  if ((km != null && km < 4) || (aod != null && aod > 0.6)) return { label: "Heavy haze", tone: "bad", note: "Low contrast and muted color. The sun may fade out before it reaches the horizon." };
-  if ((km != null && km < 10) || (aod != null && aod > 0.3)) return { label: "Hazy", tone: "meh", note: "Distant ridges fade into layers. The sun turns deep orange-red low in the sky." };
-  if ((km != null && km < 20) || (aod != null && aod > 0.12)) return { label: "Light haze", tone: "good", note: "Softens far layers and can warm up sunrise and sunset color." };
-  return { label: "Crisp air", tone: "great", note: "Long, sharp views. Good for distant peaks, skylines and telephoto landscapes." };
+  if (km != null && km < 1) return { label: tr("hzFog"), tone: "meh", note: tr("hzFogN") };
+  if ((km != null && km < 4) || (aod != null && aod > 0.6)) return { label: tr("hzHeavy"), tone: "bad", note: tr("hzHeavyN") };
+  if ((km != null && km < 10) || (aod != null && aod > 0.3)) return { label: tr("hzHazy"), tone: "meh", note: tr("hzHazyN") };
+  if ((km != null && km < 20) || (aod != null && aod > 0.12)) return { label: tr("hzLight"), tone: "good", note: tr("hzLightN") };
+  return { label: tr("hzCrisp"), tone: "great", note: tr("hzCrispN") };
 }
 
 function wxAt(t) {
@@ -500,14 +645,14 @@ function wxAt(t) {
 function skyRead(w) {
   if (!w) return null;
   const upper = Math.max(w.mid, w.high), notes = [];
-  if (w.temp - w.dew <= 2 && w.wind < 8) notes.push("Mist or fog possible (air near saturation, light wind).");
+  if (w.temp - w.dew <= 2 && w.wind < 8) notes.push(tr("fogNote"));
   let r;
-  if (w.pp >= 60 || [63, 65, 82, 95, 96, 99].includes(w.code)) r = { label: "Rain likely", tone: "bad", note: "Watch for breaks; light after a passing shower can be dramatic." };
-  else if (w.low >= 75) r = { label: "Low cloud blocking", tone: "bad", note: "A thick low deck will likely hide the sun near the horizon." };
-  else if (upper >= 20 && upper <= 80 && w.low < 50) r = { label: "Colorful sky possible", tone: "great", note: "Mid and high cloud can catch color while the horizon stays open." };
-  else if (w.total < 12) r = { label: "Clear sky", tone: "good", note: "Clean, warm light with a plain sky. Good for landscapes with strong foregrounds." };
-  else if (w.total > 85) r = { label: "Mostly overcast", tone: "meh", note: "Soft, flat light. Fine for portraits, little sky color." };
-  else r = { label: "Mixed clouds", tone: "good", note: "Some texture in the sky; color depends on gaps near the horizon." };
+  if (w.pp >= 60 || [63, 65, 82, 95, 96, 99].includes(w.code)) r = { label: tr("rain"), tone: "bad", note: tr("rainN") };
+  else if (w.low >= 75) r = { label: tr("lowCloud"), tone: "bad", note: tr("lowCloudN") };
+  else if (upper >= 20 && upper <= 80 && w.low < 50) r = { label: tr("colorful"), tone: "great", note: tr("colorfulN") };
+  else if (w.total < 12) r = { label: tr("clear"), tone: "good", note: tr("clearN") };
+  else if (w.total > 85) r = { label: tr("overcast"), tone: "meh", note: tr("overcastN") };
+  else r = { label: tr("mixed"), tone: "good", note: tr("mixedN") };
   r.notes = notes; return r;
 }
 const tempU = c => S.units === "F" ? Math.round(c * 9 / 5 + 32) + "°" : Math.round(c) + "°";
@@ -536,8 +681,8 @@ function utcLabel(ms) {
 }
 function tickClocks() {
   const now = Date.now(), z = tz();
-  const clock = zone => new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: S.h12, timeZone: zone }).format(new Date(now));
-  const date = zone => new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric", timeZone: zone }).format(new Date(now));
+  const clock = zone => new Intl.DateTimeFormat(LOC(), { hour: "numeric", minute: "2-digit", second: "2-digit", hour12: S.h12, timeZone: zone }).format(new Date(now));
+  const date = zone => new Intl.DateTimeFormat(LOC(), { weekday: "short", month: "short", day: "numeric", timeZone: zone }).format(new Date(now));
   $("clockLocal").textContent = clock(z);
   $("clockLocalSub").textContent = date(z) + " · " + utcLabel(offsetMs(z, now));
   $("clockUtc").textContent = clock("UTC");
@@ -553,22 +698,22 @@ function render() {
   const D = dayModel(S.dayOffset);
   const isToday = S.dayOffset === 0;
 
-  $("placeName").textContent = p.name;
+  $("placeName").textContent = placeLabel(p);
   $("placeCoords").textContent = Math.abs(p.lat).toFixed(4) + "°" + (p.lat >= 0 ? "N" : "S") + "  " + Math.abs(p.lng).toFixed(4) + "°" + (p.lng >= 0 ? "E" : "W");
-  $("placeTz").textContent = z.replace(/_/g, " ") + (p.tzGuess ? " (device time zone)" : "");
-  $("placeTag").innerHTML = p.example ? '<span class="tag">Example place</span>' : "";
+  $("placeTz").textContent = z.replace(/_/g, " ") + (p.tzGuess ? tr("devTz") : "");
+  $("placeTag").innerHTML = p.example ? '<span class="tag">' + tr("example") + '</span>' : "";
   const fav = S.favs.some(f => f.lat === p.lat && f.lng === p.lng);
   $("favBtn").setAttribute("aria-pressed", fav ? "true" : "false");
 
-  const dl = new Intl.DateTimeFormat(undefined, { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(D.ymd.y, D.ymd.m - 1, D.ymd.d)));
-  const rel = { 0: "Today", 1: "Tomorrow", "-1": "Yesterday" }[S.dayOffset];
-  $("dayLabel").innerHTML = esc(rel || dl) + (rel ? "<small>" + esc(dl) + "</small>" : "<small>" + (S.dayOffset > 0 ? "in " + S.dayOffset + " days" : -S.dayOffset + " days ago") + "</small>");
+  const dl = new Intl.DateTimeFormat(LOC(), { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(D.ymd.y, D.ymd.m - 1, D.ymd.d)));
+  const rel = { 0: tr("today"), 1: tr("tomorrow"), "-1": tr("yesterday") }[S.dayOffset];
+  $("dayLabel").innerHTML = esc(rel || dl) + (rel ? "<small>" + esc(dl) + "</small>" : "<small>" + (S.dayOffset > 0 ? tr("inDays", { n: S.dayOffset }) : tr("daysAgo", { n: -S.dayOffset })) + "</small>");
   $("todayBtn").hidden = isToday;
 
   renderNext(now);
   renderTimeline(D, isToday, now);
-  renderPeriod($("morning"), "Morning", D, D.sunrise, "Sunrise", true);
-  renderPeriod($("evening"), "Evening", D, D.sunset, "Sunset", false);
+  renderPeriod($("morning"), tr("morning"), D, D.sunrise, tr("sunrise"), true);
+  renderPeriod($("evening"), tr("evening"), D, D.sunset, tr("sunset"), false);
   renderAir(D, isToday, now);
   renderSun(D, isToday, now);
   renderWeather(D, now);
@@ -583,25 +728,25 @@ function renderNext(now) {
     for (const s of d.segs) if ((s.k === "golden" || s.k === "blue") && s.end > now && s.end - s.start > MIN) { ev = { ...s, noon: d.noon }; break; }
     if (ev) break;
   }
-  if (!ev) { el.innerHTML = '<div class="label">Next light</div><div class="big">No golden or blue hour</div><div class="range">The sun stays far from the horizon here for the next few days (polar day or night).</div>'; return; }
-  const name = ev.k === "golden" ? "Golden hour" : "Blue hour";
+  if (!ev) { el.innerHTML = '<div class="label">' + tr("nextLight") + '</div><div class="big">' + tr("noTwilightBig") + '</div><div class="range">' + tr("polar") + '</div>'; return; }
+  const name = '<em>' + tr(ev.k) + '</em>';
   const am = (ev.start + ev.end) / 2 < ev.noon;
   const nowIn = ev.start <= now;
   el.style.setProperty("--accent", ev.k === "golden" ? "var(--gold)" : "var(--blue)");
   el.style.setProperty("--glow", ev.k === "golden" ? "var(--gold-soft)" : "var(--blue-soft)");
   const w = skyRead(wxAt((ev.start + ev.end) / 2));
-  const whenDay = sameDay(ev.start, now) ? "" : (sameDay(ev.start, now + DAY) ? "Tomorrow " : new Intl.DateTimeFormat(undefined, { weekday: "long", timeZone: tz() }).format(new Date(ev.start)) + " ");
+  const whenDay = sameDay(ev.start, now) ? "" : (sameDay(ev.start, now + DAY) ? tr("tomorrowPre") : new Intl.DateTimeFormat(LOC(), { weekday: "long", timeZone: tz() }).format(new Date(ev.start)) + " ");
   el.innerHTML =
-    '<div class="label">' + (nowIn ? "Happening now" : "Next light") + ' · ' + (am ? "Morning" : "Evening") + '</div>' +
-    '<div class="big">' + (nowIn ? '<em>' + name + '</em> now' : '<em>' + name + '</em> in ' + fmtDur(ev.start - now)) + '</div>' +
-    '<div class="range mono">' + esc(whenDay) + fmtTime(ev.start) + ' – ' + fmtTime(ev.end) + ' · ' + (nowIn ? fmtDur(ev.end - now) + ' left' : fmtDur(ev.end - ev.start) + ' long') + '</div>' +
+    '<div class="label">' + (nowIn ? tr("happening") : tr("nextLight")) + ' · ' + (am ? tr("morning") : tr("evening")) + '</div>' +
+    '<div class="big">' + (nowIn ? tr("nowBig", { name }) : tr("inBig", { name, d: fmtDur(ev.start - now) })) + '</div>' +
+    '<div class="range mono">' + esc(whenDay) + fmtTime(ev.start) + ' – ' + fmtTime(ev.end) + ' · ' + (nowIn ? tr("left", { d: fmtDur(ev.end - now) }) : tr("long", { d: fmtDur(ev.end - ev.start) })) + '</div>' +
     (w ? '<span class="pill tone-' + w.tone + '">' + esc(w.label) + '</span>' : "");
 }
 function sameDay(a, b) { const x = partsIn(tz(), a), y = partsIn(tz(), b); return x.year === y.year && x.month === y.month && x.day === y.day; }
 
 function renderTimeline(D, isToday, now) {
   const span = D.end - D.start;
-  $("tlBar").innerHTML = D.segs.map(s => '<div class="b-' + s.k + '" style="width:' + ((s.end - s.start) / span * 100).toFixed(3) + '%" title="' + esc(BANDS.find(b => b.k === s.k).label + " " + fmtTime(s.start) + "–" + fmtTime(s.end)) + '"></div>').join("") +
+  $("tlBar").innerHTML = D.segs.map(s => '<div class="b-' + s.k + '" style="width:' + ((s.end - s.start) / span * 100).toFixed(3) + '%" title="' + esc(tr(s.k) + " " + fmtTime(s.start) + "–" + fmtTime(s.end)) + '"></div>').join("") +
     (isToday ? '<div class="tl-now" style="left:' + ((now - D.start) / span * 100).toFixed(2) + '%"></div>' : "");
   let ticks = "";
   for (let h = 3; h < 24; h += 3) { const t = D.start + h * HOUR; ticks += '<span style="left:' + ((t - D.start) / span * 100) + '%">' + esc(fmtHour(t)) + '</span>'; }
@@ -614,7 +759,7 @@ function renderTimeline(D, isToday, now) {
 function segRow(s, kind) {
   const isG = kind === "golden";
   return '<div class="row"><span class="dot" style="background:var(--' + (isG ? "gold" : "blue") + ')"></span>' +
-    '<span class="name">' + (isG ? "Golden hour" : "Blue hour") + '<small>' + fmtDur(s.end - s.start) + '</small></span>' +
+    '<span class="name">' + tr(isG ? "golden" : "blue") + '<small>' + fmtDur(s.end - s.start) + '</small></span>' +
     '<span class="val">' + fmtTime(s.start) + ' – ' + fmtTime(s.end) + '</span></div>';
 }
 function renderPeriod(el, title, D, sunT, sunLabel, am) {
@@ -622,7 +767,7 @@ function renderPeriod(el, title, D, sunT, sunLabel, am) {
   const items = (am ? [...D.amBlue, ...D.amGold] : [...D.pmGold, ...D.pmBlue]).map(s => ({ t: s.start, html: segRow(s, s.k) }));
   if (sunT != null) items.push({ t: sunT, html: sunRow(sunT, sunLabel) });
   items.sort((a, b) => a.t - b.t).forEach(i => rows += i.html);
-  if (!rows) rows = '<div class="read">' + (D.noonAlt < -4 ? "The sun stays below the horizon all day." : D.minAlt > 6 ? "The sun stays high all day (midnight sun)." : "No twilight transition in this half of the day.") + '</div>';
+  if (!rows) rows = '<div class="read">' + (D.noonAlt < -4 ? tr("belowAllDay") : D.minAlt > 6 ? tr("highAllDay") : tr("noTransition")) + '</div>';
   const goldSeg = (am ? D.amGold : D.pmGold)[0];
   const gMid = goldSeg ? (goldSeg.start + goldSeg.end) / 2 : 0;
   const w = goldSeg ? wxAt(gMid) : null, r = skyRead(w), aq = goldSeg ? airAt(gMid) : null;
@@ -631,16 +776,16 @@ function renderPeriod(el, title, D, sunT, sunLabel, am) {
   if (r) {
     read = '<div class="read"><span class="pill tone-' + r.tone + '">' + esc(r.label) + '</span><span>' + esc(r.note) + '</span>' +
       r.notes.map(n => '<span>' + esc(n) + '</span>').join("") +
-      (hz ? '<span>' + esc(hz.label) + ': ' + esc(hz.note) + '</span>' : "") +
-      '<span class="mono">Clouds L ' + w.low + '% · M ' + w.mid + '% · H ' + w.high + '% · rain ' + w.pp + '% · ' + tempU(w.temp) + '</span>' +
-      '<span class="mono">Visibility ' + visU(w.vis) + (aq ? ' · AQI ' + aq.aqi : "") + '</span></div>';
-  } else if (goldSeg && S.weatherErr) read = '<div class="read">Forecast unavailable.</div>';
-  else if (goldSeg && S.weather) read = '<div class="read">Beyond the 16-day forecast.</div>';
-  el.innerHTML = '<div class="card-head"><h2>' + title + '</h2><span class="label">' + (sunT != null ? card(sunPos(sunT, S.place.lat, S.place.lng).az) + " horizon" : "") + '</span></div><div class="rows">' + rows + '</div>' + read;
+      (hz ? '<span>' + esc(hz.label) + (LANG === "zh" ? "：" : ": ") + esc(hz.note) + '</span>' : "") +
+      '<span class="mono">' + tr("cloudsLine", { l: w.low, m: w.mid, h: w.high, p: w.pp }) + ' · ' + tempU(w.temp) + '</span>' +
+      '<span class="mono">' + tr("visLine", { v: visU(w.vis) }) + (aq ? ' · AQI ' + aq.aqi : "") + '</span></div>';
+  } else if (goldSeg && S.weatherErr) read = '<div class="read">' + tr("fcUnavail") + '</div>';
+  else if (goldSeg && S.weather) read = '<div class="read">' + tr("beyond16") + '</div>';
+  el.innerHTML = '<div class="card-head"><h2>' + title + '</h2><span class="label">' + (sunT != null ? tr("horizon", { d: card(sunPos(sunT, S.place.lat, S.place.lng).az) }) : "") + '</span></div><div class="rows">' + rows + '</div>' + read;
 }
 function sunRow(t, label) {
   const az = sunPos(t, S.place.lat, S.place.lng).az;
-  return '<div class="row"><span class="dot" style="background:var(--fg)"></span><span class="name">' + label + '<small>Azimuth ' + Math.round(az) + '° ' + card(az) + '</small></span><span class="val">' + fmtTime(t) + '</span></div>';
+  return '<div class="row"><span class="dot" style="background:var(--fg)"></span><span class="name">' + label + '<small>' + tr("azimuthOf", { a: Math.round(az), d: card(az) }) + '</small></span><span class="val">' + fmtTime(t) + '</span></div>';
 }
 
 function polar(alt, az, R) { const r = R * (90 - Math.max(alt, 0)) / 90; return [r * Math.sin(az * RAD), -r * Math.cos(az * RAD)]; }
@@ -652,7 +797,7 @@ function renderSun(D, isToday, now) {
   svg += '<text x="3" y="' + (-R * 60 / 90 + 11) + '" font-size="8" fill="var(--faint)" font-family="var(--f-mono)">30°</text>';
   svg += '<text x="3" y="' + (-R * 30 / 90 + 11) + '" font-size="8" fill="var(--faint)" font-family="var(--f-mono)">60°</text>';
   for (let a = 0; a < 360; a += 30) { const [x1, y1] = polar(0, a, R), [x2, y2] = polar(0, a, R + 5); svg += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="var(--faint)"/>'; }
-  [["N", 0], ["E", 90], ["S", 180], ["W", 270]].forEach(([l, a]) => { const [x, y] = polar(0, a, R + 16); svg += '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + (l === "N" ? "var(--fg)" : "var(--muted)") + '" font-family="var(--f-body)">' + l + '</text>'; });
+  [[tr("cN"), 0], [tr("cE"), 90], [tr("cS"), 180], [tr("cW"), 270]].forEach(([l, a]) => { const [x, y] = polar(0, a, R + 16); svg += '<text x="' + x + '" y="' + (y + 4) + '" text-anchor="middle" font-size="12" font-weight="700" fill="' + (a === 0 ? "var(--fg)" : "var(--muted)") + '" font-family="var(--f-body)">' + l + '</text>'; });
   // path, colored by band, only above horizon
   let cur = null, paths = [];
   for (let t = D.start; t <= D.end; t += 5 * MIN) {
@@ -681,30 +826,29 @@ function renderSun(D, isToday, now) {
   }
   svg += '<circle r="2" fill="var(--faint)"/>';
   $("compass").innerHTML = svg;
-  $("sunWhen").textContent = isToday ? "Now · " + fmtTime(now) : "Path for this day";
+  $("sunWhen").textContent = isToday ? tr("nowAt", { t: fmtTime(now) }) : tr("pathDay");
   const stat = (l, v) => '<div class="stat"><div class="label">' + l + '</div><div class="v">' + v + '</div></div>';
   let html = "";
   if (isToday) {
-    html += stat("Azimuth", Math.round(s.az) + "° <small>" + card(s.az) + "</small>");
-    html += stat("Elevation", s.alt.toFixed(1) + "°");
-    html += stat("Shadows", s.alt > 0.5 ? (1 / Math.tan(s.alt * RAD)).toFixed(1) + "<small>× height</small>" : "<small>Sun down</small>");
-    html += stat("Light now", "<small>" + esc(BANDS[bandIdx(s.alt)].label) + "</small>");
+    html += stat(tr("azimuth"), Math.round(s.az) + "° <small>" + card(s.az) + "</small>");
+    html += stat(tr("elevation"), s.alt.toFixed(1) + "°");
+    html += stat(tr("shadows"), s.alt > 0.5 ? (1 / Math.tan(s.alt * RAD)).toFixed(1) + "<small>" + tr("xHeight") + "</small>" : "<small>" + tr("sunDown") + "</small>");
+    html += stat(tr("lightNow"), "<small>" + esc(tr(BANDS[bandIdx(s.alt)].k)) + "</small>");
   }
-  html += stat("Solar noon", fmtTime(D.noon) + " <small>" + D.noonAlt.toFixed(0) + "° high</small>");
-  html += stat("Day length", D.sunrise != null && D.sunset != null ? fmtDur(D.sunset - D.sunrise) : (D.noonAlt > 0 ? "<small>24 h</small>" : "<small>0 h</small>"));
+  html += stat(tr("solarNoon"), fmtTime(D.noon) + " <small>" + tr("degHigh", { a: D.noonAlt.toFixed(0) }) + "</small>");
+  html += stat(tr("dayLength"), D.sunrise != null && D.sunset != null ? fmtDur(D.sunset - D.sunrise) : "<small>" + tr("durH", { h: D.noonAlt > 0 ? 24 : 0 }) + "</small>");
   $("sunStats").innerHTML = html;
 }
 
 function renderWeather(D, now) {
   const el = $("weather");
   if (S.weatherErr) {
-    el.innerHTML = '<div class="err">The forecast couldn\'t load. If you\'re viewing this inside the claude.ai preview, outside network requests are blocked there; open the hosted copy of Light Scout for live weather. Otherwise check your connection and refresh.</div>';
+    el.innerHTML = '<div class="err">' + tr("wxErr") + '</div>';
     return;
   }
-  if (!S.weather) { el.innerHTML = '<div class="err">Loading forecast…</div>'; return; }
+  if (!S.weather) { el.innerHTML = '<div class="err">' + tr("wxLoading") + '</div>'; return; }
   let html = "";
-  const saved = S.weatherSavedAt ? '<div class="notice" style="margin-bottom:10px">You\'re offline. Showing the forecast saved ' +
-    new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: S.h12 }).format(new Date(S.weatherSavedAt)) + '.</div>' : "";
+  const saved = S.weatherSavedAt ? '<div class="notice" style="margin-bottom:10px">' + tr("wxSaved", { d: savedWhen(S.weatherSavedAt) }) + '</div>' : "";
   for (let t = D.start; t < D.end; t += HOUR) {
     const w = wxAt(t); if (!w) continue;
     const mid = t + HOUR / 2;
@@ -713,52 +857,52 @@ function renderWeather(D, now) {
     const cls = seg ? " is-" + seg.k : "", nowCls = now >= t && now < t + HOUR ? " is-now" : "";
     const bar = (l, v) => '<span>' + l + '</span><b><i style="width:' + v + '%"></i></b>';
     html += '<div class="hour' + cls + nowCls + '"><span class="t">' + esc(fmtHour(t)) + '</span><span class="temp">' + tempU(w.temp) + '</span>' +
-      '<span class="desc">' + esc(WMO[w.code] || "—") + (w.pp >= 20 ? " · " + w.pp + "%" : "") + '</span>' +
-      '<div class="cl">' + bar("L", w.low) + bar("M", w.mid) + bar("H", w.high) + '</div>' +
-      '<span class="mini">' + windU(w.wind) + '</span><span class="mini">vis ' + visU(w.vis) + '</span>' + (airAt(t) ? '<span class="mini">AQI ' + airAt(t).aqi + '</span>' : "") + '</div>';
+      '<span class="desc">' + esc(wmo(w.code) || "—") + (w.pp >= 20 ? " · " + w.pp + "%" : "") + '</span>' +
+      '<div class="cl">' + bar(tr("barL"), w.low) + bar(tr("barM"), w.mid) + bar(tr("barH"), w.high) + '</div>' +
+      '<span class="mini">' + windU(w.wind) + '</span><span class="mini">' + tr("visShort") + ' ' + visU(w.vis) + '</span>' + (airAt(t) ? '<span class="mini">AQI ' + airAt(t).aqi + '</span>' : "") + '</div>';
   }
-  el.innerHTML = html ? saved + '<div class="hours" id="hoursRow">' + html + '</div>' : '<div class="err">This day is beyond the 16-day forecast.</div>';
+  el.innerHTML = html ? saved + '<div class="hours" id="hoursRow">' + html + '</div>' : '<div class="err">' + tr("beyond16Day") + '</div>';
   const row = $("hoursRow"), nowEl = row && row.querySelector(".is-now, .is-golden");
   if (nowEl && row) row.scrollLeft = Math.max(0, nowEl.offsetLeft - row.offsetLeft - 8);
 }
 
+const savedWhen = t => new Intl.DateTimeFormat(LOC(), { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: S.h12 }).format(new Date(t));
 function renderAir(D, isToday, now) {
   const el = $("airBody");
   const t = isToday ? now : D.start + 12 * HOUR;
-  $("airWhen").textContent = isToday ? "Now" : "At midday";
+  $("airWhen").textContent = isToday ? tr("now") : tr("midday");
   const a = airAt(t), w = wxAt(t);
   if (!a && !w) {
-    el.innerHTML = '<div class="err">' + (S.airErr && S.weatherErr ? "Air quality couldn't load. Check your connection, or open the hosted app if you're in the claude.ai preview."
-      : (S.air || S.airErr) ? "The air quality forecast covers the next 5 days." : "Loading air quality…") + '</div>';
+    el.innerHTML = '<div class="err">' + (S.airErr && S.weatherErr ? tr("airErrBoth") : (S.air || S.airErr) ? tr("air5") : tr("airLoading")) + '</div>';
     return;
   }
   const stat = (l, v) => '<div class="stat"><div class="label">' + l + '</div><div class="v">' + v + '</div></div>';
   const hz = hazeRead(w ? w.vis : null, a ? a.aod : null);
   let top = "";
-  if (a) { const c = aqiCat(a.aqi); top += '<div class="aqi"><span class="n">' + a.aqi + '</span><span class="u">US AQI</span></div><span class="pill tone-' + c.tone + '">' + esc(c.label) + '</span>'; }
-  else top += '<span class="err">' + (S.airErr ? "Air quality couldn't load right now." : "The air quality forecast covers the next 5 days.") + '</span>';
+  if (a) { const c = aqiCat(a.aqi); top += '<div class="aqi"><span class="n">' + a.aqi + '</span><span class="u">' + tr("usAqi") + '</span></div><span class="pill tone-' + c.tone + '">' + esc(c.label) + '</span>'; }
+  else top += '<span class="err">' + (S.airErr ? tr("airErr") : tr("air5")) + '</span>';
   let stats = "";
-  stats += stat("Visibility", w ? visU(w.vis) : "—");
+  stats += stat(tr("visibility"), w ? visU(w.vis) : "—");
   if (a) {
     stats += stat("PM2.5", Math.round(a.pm25) + " <small>µg/m³</small>");
     stats += stat("PM10", Math.round(a.pm10) + " <small>µg/m³</small>");
-    stats += stat("Haze (AOD)", a.aod != null ? a.aod.toFixed(2) : "—");
+    stats += stat(tr("haze"), a.aod != null ? a.aod.toFixed(2) : "—");
   }
   let range = "";
   if (S.air) {
     let lo = null, hi = null;
     for (let h = D.start; h < D.end; h += HOUR) { const x = airAt(h); if (x) { if (!lo || x.aqi < lo.aqi) lo = { ...x, t: h }; if (!hi || x.aqi > hi.aqi) hi = { ...x, t: h }; } }
-    if (lo && hi && hi.aqi !== lo.aqi) range = '<span class="mono">This day: AQI ' + lo.aqi + ' around ' + fmtHour(lo.t) + ', up to ' + hi.aqi + ' around ' + fmtHour(hi.t) + '</span>';
+    if (lo && hi && hi.aqi !== lo.aqi) range = '<span class="mono">' + tr("airRange", { lo: lo.aqi, lt: fmtHour(lo.t), hi: hi.aqi, ht: fmtHour(hi.t) }) + '</span>';
   }
-  const saved = S.airSavedAt ? '<span>Offline. Showing air quality saved ' + new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: S.h12 }).format(new Date(S.airSavedAt)) + '.</span>' : "";
+  const saved = S.airSavedAt ? '<span>' + tr("airSaved", { d: savedWhen(S.airSavedAt) }) + '</span>' : "";
   el.innerHTML = '<div class="air-top">' + top + '</div>' +
     '<div class="stats four" style="margin-top:12px">' + stats + '</div>' +
     '<div class="read" style="margin-top:12px"><span class="pill tone-' + hz.tone + '">' + esc(hz.label) + '</span><span>' + esc(hz.note) + '</span>' + range + saved + '</div>';
 }
 
 function phaseName(p) {
-  if (p < 0.03 || p > 0.97) return "New moon"; if (p < 0.22) return "Waxing crescent"; if (p < 0.28) return "First quarter";
-  if (p < 0.47) return "Waxing gibbous"; if (p < 0.53) return "Full moon"; if (p < 0.72) return "Waning gibbous"; if (p < 0.78) return "Last quarter"; return "Waning crescent";
+  const k = p < 0.03 || p > 0.97 ? "phNew" : p < 0.22 ? "phWaxC" : p < 0.28 ? "phFirst" : p < 0.47 ? "phWaxG" : p < 0.53 ? "phFull" : p < 0.72 ? "phWanG" : p < 0.78 ? "phLast" : "phWanC";
+  return tr(k);
 }
 function renderNight(D) {
   const p = S.place, R = 40;
@@ -773,57 +917,57 @@ function renderNight(D) {
   const dw = darkWindow(D.start + 12 * HOUR, D.end + 12 * HOUR, p.lat, p.lng);
   const stat = (l, v) => '<div class="stat"><div class="label">' + l + '</div><div class="v">' + v + '</div></div>';
   $("nightStats").innerHTML =
-    stat(esc(phaseName(ill.phase)), Math.round(f * 100) + "% <small>lit</small>") +
-    stat("Moonrise / set", '<small>' + fmtTime(me.rise) + ' / ' + fmtTime(me.set) + '</small>') +
-    '<div class="stat" style="grid-column:1/-1"><div class="label">Darkest window tonight</div><div class="v">' +
-      (dw && dw.end - dw.start >= 10 * MIN ? fmtTime(dw.start) + " – " + fmtTime(dw.end) + " <small>" + fmtDur(dw.end - dw.start) + ", no sun or moon</small>"
-        : "<small>None tonight. The moon is up through astronomical darkness, or the sky never gets fully dark.</small>") + '</div></div>';
+    stat(esc(phaseName(ill.phase)), Math.round(f * 100) + "% <small>" + tr("lit") + "</small>") +
+    stat(tr("moonRiseSet"), '<small>' + fmtTime(me.rise) + ' / ' + fmtTime(me.set) + '</small>') +
+    '<div class="stat" style="grid-column:1/-1"><div class="label">' + tr("darkest") + '</div><div class="v">' +
+      (dw && dw.end - dw.start >= 10 * MIN ? fmtTime(dw.start) + " – " + fmtTime(dw.end) + " <small>" + tr("noSunMoon", { d: fmtDur(dw.end - dw.start) }) + "</small>"
+        : "<small>" + tr("noDark") + "</small>") + '</div></div>';
 }
 
 // ---------- location ----------
 function setPlace(pl, opts = {}) {
-  S.place = { name: pl.name, sub: pl.sub || "", lat: +pl.lat, lng: +pl.lng, tz: pl.tz && validTz(pl.tz) ? pl.tz : DEVICE_TZ, tzGuess: !(pl.tz && validTz(pl.tz)), example: !!opts.example };
+  S.place = { name: pl.name, pid: pl.pid ?? null, mine: !!pl.mine, sub: pl.sub || "", lat: +pl.lat, lng: +pl.lng, tz: pl.tz && validTz(pl.tz) ? pl.tz : DEVICE_TZ, tzGuess: !(pl.tz && validTz(pl.tz)), example: !!opts.example };
   if (!opts.example) { store.set("place", S.place); notice(""); }
   S.weather = null; S.weatherFor = null; S.dayOffset = 0;
   S.air = null; S.airFor = null;
   closeSearch(); render(); loadWeather(); loadAir();
 }
-function notice(msg) { const n = $("notice"); n.textContent = msg || ""; n.hidden = !msg; }
+let noticeKey = "";
+function notice(key) { noticeKey = key || ""; paintNotice(); }
+function paintNotice() { const n = $("notice"); n.textContent = noticeKey ? tr(noticeKey) : ""; n.hidden = !noticeKey; }
 function locate(silent) {
-  const btn = $("locBtn").querySelector("span"), done = () => { btn.textContent = "Locate"; };
+  const btn = $("locBtn").querySelector("span"), done = () => { btn.dataset.i18n = "locate"; btn.textContent = tr("locate"); };
   if (!document.querySelector('link[rel="manifest"]')) {
     // The claude.ai preview refuses location without asking.
-    if (!silent) notice("Location is blocked inside the claude.ai preview. Open the app at themagicianleo.github.io/light-scout to use where you are.");
+    if (!silent) notice("nPreview");
     return;
   }
-  if (!window.isSecureContext || !navigator.geolocation) { notice("Location needs the secure (https) address: themagicianleo.github.io/light-scout. You can also search for a place."); return; }
-  btn.textContent = "Locating…";
+  if (!window.isSecureContext || !navigator.geolocation) { notice("nHttps"); return; }
+  btn.dataset.i18n = "locating"; btn.textContent = tr("locating");
   const ok = async pos => {
     done(); notice("");
     const lat = +pos.coords.latitude.toFixed(5), lng = +pos.coords.longitude.toFixed(5);
-    setPlace({ name: "My location", lat, lng, tz: DEVICE_TZ });
+    setPlace({ name: "My location", mine: true, lat, lng, tz: DEVICE_TZ });
     try {
-      const r = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lng + "&localityLanguage=en");
+      const r = await fetch("https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=" + lat + "&longitude=" + lng + "&localityLanguage=" + (LANG === "zh" ? "zh" : "en"));
       const j = await r.json(); const nm = j.locality || j.city || j.principalSubdivision;
-      if (nm && S.place.lat === lat) { S.place.name = nm; S.place.sub = j.countryName || ""; store.set("place", S.place); render(); }
+      if (nm && S.place.lat === lat) { S.place.name = nm; S.place.mine = false; S.place.sub = j.countryName || ""; store.set("place", S.place); render(); }
     } catch {}
   };
   const fail = err => {
     done();
     if (err.code === 1) {
-      notice(iOS
-        ? "Location permission is off. Turn it on in Settings → Privacy & Security → Location Services → Safari Websites (or Light Scout) → While Using the App, then tap Locate. Or search for a place."
-        : "Location permission is off for this site. Tap the icon to the left of the address bar (or long-press the app icon → App info) → Permissions → Location → Allow, then tap Locate. Or search for a place.");
+      notice(iOS ? "nDeniedIos" : "nDenied");
     } else if (err.code === 3) {
-      notice("Finding your location took too long. Make sure Location (GPS) is switched on, move near a window or outside, then tap Locate again. Or search for a place.");
+      notice("nTimeout");
     } else {
-      notice("Your phone couldn't work out where you are. Switch on Location (GPS) in your phone's settings, then tap Locate. Or search for a place.");
+      notice("nUnavail");
     }
   };
   // Quick network fix first; many phones (and places where Google's location service is unreachable) only answer via GPS, so fall back to it.
   navigator.geolocation.getCurrentPosition(ok, err => {
     if (err.code === 1) return fail(err);
-    notice("Still looking. Trying GPS, which can take up to 30 seconds…");
+    notice("nGps");
     navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
   }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * MIN });
 }
@@ -833,27 +977,27 @@ let searchTimer = null, searchSeq = 0;
 function openSearch() { $("search").hidden = false; $("placeBtn").setAttribute("aria-expanded", "true"); renderChips(); $("q").focus(); }
 function closeSearch() { $("search").hidden = true; $("placeBtn").setAttribute("aria-expanded", "false"); $("q").value = ""; $("results").innerHTML = ""; }
 function renderChips() {
-  $("presets").innerHTML = PRESETS.map((p, i) => '<button class="chip" data-preset="' + i + '">' + esc(p.name) + '</button>').join("");
+  $("presets").innerHTML = PRESETS.map((p, i) => '<button class="chip" data-preset="' + i + '">' + esc(placeLabel(p)) + '</button>').join("");
   $("favWrap").hidden = !S.favs.length;
-  $("favs").innerHTML = S.favs.map((p, i) => '<button class="chip" data-fav="' + i + '">' + esc(p.name) + '</button>').join("");
+  $("favs").innerHTML = S.favs.map((p, i) => '<button class="chip" data-fav="' + i + '">' + esc(placeLabel(p)) + '</button>').join("");
 }
 function doSearch(q) {
   const res = $("results");
   const m = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)\s*$/);
   if (m && Math.abs(+m[1]) <= 90 && Math.abs(+m[2]) <= 180) {
-    res.innerHTML = '<button class="result" data-lat="' + m[1] + '" data-lng="' + m[2] + '" data-name="' + esc((+m[1]).toFixed(3) + ", " + (+m[2]).toFixed(3)) + '"><span>Use these coordinates</span><small class="mono">' + esc(m[1] + ", " + m[2]) + '</small></button>';
+    res.innerHTML = '<button class="result" data-lat="' + m[1] + '" data-lng="' + m[2] + '" data-name="' + esc((+m[1]).toFixed(3) + ", " + (+m[2]).toFixed(3)) + '"><span>' + tr("useCoords") + '</span><small class="mono">' + esc(m[1] + ", " + m[2]) + '</small></button>';
     return;
   }
   if (q.trim().length < 2) { res.innerHTML = ""; return; }
   const seq = ++searchSeq;
-  res.innerHTML = '<div class="err" style="padding:6px 10px">Searching…</div>';
-  fetch("https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name=" + encodeURIComponent(q.trim()))
+  res.innerHTML = '<div class="err" style="padding:6px 10px">' + tr("searching") + '</div>';
+  fetch("https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&language=" + (LANG === "zh" ? "zh" : "en") + "&name=" + encodeURIComponent(q.trim()))
     .then(r => r.json()).then(j => {
       if (seq !== searchSeq) return;
       const list = j.results || [];
       res.innerHTML = list.length ? list.map(r => '<button class="result" data-lat="' + r.latitude + '" data-lng="' + r.longitude + '" data-tz="' + esc(r.timezone || "") + '" data-name="' + esc(r.name) + '" data-sub="' + esc([r.admin1, r.country].filter(Boolean).join(", ")) + '"><span>' + esc(r.name) + '</span><small>' + esc([r.admin1, r.country].filter(Boolean).join(", ")) + '</small></button>').join("")
-        : '<div class="err" style="padding:6px 10px">No places found. Try a nearby town, or paste coordinates.</div>';
-    }).catch(() => { if (seq === searchSeq) res.innerHTML = '<div class="err" style="padding:6px 10px">Search is offline here. Paste coordinates (like 36.06, -112.14) or pick an idea below.</div>'; });
+        : '<div class="err" style="padding:6px 10px">' + tr("noPlaces") + '</div>';
+    }).catch(() => { if (seq === searchSeq) res.innerHTML = '<div class="err" style="padding:6px 10px">' + tr("searchOffline") + '</div>'; });
 }
 
 // ---------- install (only on the hosted copy, which links a manifest) ----------
@@ -866,7 +1010,7 @@ addEventListener("appinstalled", () => { installEvt = null; $("installBtn").hidd
 if (installable && !standalone && iOS) $("installBtn").hidden = false;
 $("installBtn").onclick = async () => {
   if (installEvt) { installEvt.prompt(); const c = await installEvt.userChoice.catch(() => null); if (c && c.outcome === "accepted") $("installBtn").hidden = true; installEvt = null; return; }
-  notice(iOS ? "To install: tap the Share button in Safari's toolbar, then Add to Home Screen." : "To install: open your browser menu and choose Install app or Add to Home screen.");
+  notice(iOS ? "nInstallIos" : "nInstall");
 };
 
 // ---------- wiring ----------
@@ -883,7 +1027,7 @@ $("search").onclick = e => {
 $("favBtn").onclick = () => {
   const p = S.place; if (!p) return;
   const i = S.favs.findIndex(f => f.lat === p.lat && f.lng === p.lng);
-  if (i >= 0) S.favs.splice(i, 1); else S.favs.unshift({ name: p.name, sub: p.sub, lat: p.lat, lng: p.lng, tz: p.tzGuess ? "" : p.tz });
+  if (i >= 0) S.favs.splice(i, 1); else S.favs.unshift({ name: p.name, pid: p.pid, mine: p.mine, sub: p.sub, lat: p.lat, lng: p.lng, tz: p.tzGuess ? "" : p.tz });
   store.set("favs", S.favs.slice(0, 20)); render(); if (!$("search").hidden) renderChips();
 };
 $("prevDay").onclick = () => { S.dayOffset--; render(); };
@@ -898,12 +1042,20 @@ $("uF").onclick = () => { S.units = "F"; store.set("units", "F"); syncToggles();
 $("h24").onclick = () => { S.h12 = false; store.set("h12", false); syncToggles(); render(); };
 $("h12").onclick = () => { S.h12 = true; store.set("h12", true); syncToggles(); render(); };
 syncToggles();
+function setLang(l) {
+  LANG = l; store.set("lang", l);
+  applyStatic(); paintNotice(); render();
+  if (!$("search").hidden) { renderChips(); doSearch($("q").value); }
+}
+$("langEn").onclick = () => setLang("en");
+$("langZh").onclick = () => setLang("zh");
+applyStatic();
 
 // boot: saved place → else example place, then try device location quietly
 if (S.place) { render(); loadWeather(); loadAir(); }
 else {
   setPlace(PRESETS[0], { example: true });
-  notice("Showing an example place. Tap Locate to use where you are, or tap the place name to search.");
+  notice("nExample");
   locate(true);
 }
 setInterval(() => { if (document.visibilityState === "visible") render(); }, 30000);

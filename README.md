@@ -4,7 +4,8 @@ A photographer's light planner in a single web page: blue and golden hour times,
 
 - Sun and moon math runs on the device (no network needed).
 - Forecast and air quality (US AQI, PM2.5, PM10, aerosol haze; 5 days): [Open-Meteo](https://open-meteo.com) (free, no API key). Place search: Open-Meteo geocoding. "Locate" names your spot via BigDataCloud's free reverse geocoder.
-- Saved places, units and clock format are stored in the browser.
+- English and Simplified Chinese (EN / 中文 switch in the top bar; defaults to Chinese on Chinese-language devices).
+- Saved places, units, clock format and language are stored in the browser.
 
 ## Files
 
