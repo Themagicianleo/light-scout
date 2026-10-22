@@ -694,11 +694,16 @@ function setPlace(pl, opts = {}) {
 }
 function notice(msg) { const n = $("notice"); n.textContent = msg || ""; n.hidden = !msg; }
 function locate(silent) {
-  if (!navigator.geolocation) { if (!silent) notice("Location isn't available in this browser. Search for a place instead."); return; }
-  if (!silent) { $("locBtn").querySelector("span").textContent = "Locating…"; }
-  navigator.geolocation.getCurrentPosition(async pos => {
-    $("locBtn").querySelector("span").textContent = "Locate";
-    notice("");
+  const btn = $("locBtn").querySelector("span"), done = () => { btn.textContent = "Locate"; };
+  if (!document.querySelector('link[rel="manifest"]')) {
+    // The claude.ai preview refuses location without asking.
+    if (!silent) notice("Location is blocked inside the claude.ai preview. Open the app at themagicianleo.github.io/light-scout to use where you are.");
+    return;
+  }
+  if (!window.isSecureContext || !navigator.geolocation) { notice("Location needs the secure (https) address: themagicianleo.github.io/light-scout. You can also search for a place."); return; }
+  btn.textContent = "Locating…";
+  const ok = async pos => {
+    done(); notice("");
     const lat = +pos.coords.latitude.toFixed(5), lng = +pos.coords.longitude.toFixed(5);
     setPlace({ name: "My location", lat, lng, tz: DEVICE_TZ });
     try {
@@ -706,10 +711,25 @@ function locate(silent) {
       const j = await r.json(); const nm = j.locality || j.city || j.principalSubdivision;
       if (nm && S.place.lat === lat) { S.place.name = nm; S.place.sub = j.countryName || ""; store.set("place", S.place); render(); }
     } catch {}
-  }, err => {
-    $("locBtn").querySelector("span").textContent = "Locate";
-    if (!silent) notice(err.code === 1 ? "Location access was refused. Allow it in your browser settings, or search for a place." : "Couldn't get your location. Try again outdoors, or search for a place.");
-  }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 10 * MIN });
+  };
+  const fail = err => {
+    done();
+    if (err.code === 1) {
+      notice(iOS
+        ? "Location permission is off. Turn it on in Settings → Privacy & Security → Location Services → Safari Websites (or Light Scout) → While Using the App, then tap Locate. Or search for a place."
+        : "Location permission is off for this site. Tap the icon to the left of the address bar (or long-press the app icon → App info) → Permissions → Location → Allow, then tap Locate. Or search for a place.");
+    } else if (err.code === 3) {
+      notice("Finding your location took too long. Make sure Location (GPS) is switched on, move near a window or outside, then tap Locate again. Or search for a place.");
+    } else {
+      notice("Your phone couldn't work out where you are. Switch on Location (GPS) in your phone's settings, then tap Locate. Or search for a place.");
+    }
+  };
+  // Quick network fix first; many phones (and places where Google's location service is unreachable) only answer via GPS, so fall back to it.
+  navigator.geolocation.getCurrentPosition(ok, err => {
+    if (err.code === 1) return fail(err);
+    notice("Still looking. Trying GPS, which can take up to 30 seconds…");
+    navigator.geolocation.getCurrentPosition(ok, fail, { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 });
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 10 * MIN });
 }
 
 // search
