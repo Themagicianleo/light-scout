@@ -1,7 +1,7 @@
 {
   "name": "Light Scout",
   "short_name": "Light Scout",
-  "description": "Golden hour, blue hour, sun direction and sky forecast for photographers.",
+  "description": "Golden hour, blue hour, sun direction and sky forecast for photographers, plus a light planner for plane spotting.",
   "id": "./",
   "start_url": "./",
   "scope": "./",

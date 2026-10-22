@@ -160,3 +160,16 @@ test('traffic: arriving 02L with a time estimate, departing 20R, others ignored'
   assert.equal(r.ground, 1);
   assert.equal(r.others, 1);
 });
+
+test('offline: sw.js caches every planner file, the airport data and Leaflet', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+  const files = [
+    ...readdirSync(new URL('../planner/', import.meta.url)).filter((f) => /\.(js|css)$/.test(f)).map((f) => `./planner/${f}`),
+    ...readdirSync(new URL('../planner/sources/', import.meta.url)).map((f) => `./planner/sources/${f}`),
+    './data/airports.json', './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css',
+  ];
+  for (const f of files) assert.ok(sw.includes(`"${f}"`), `${f} is missing from sw.js`);
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.ok(html.includes('<script type="module" src="planner/main.js">'), 'build.sh adds the planner');
+});

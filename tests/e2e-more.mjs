@@ -104,4 +104,47 @@ async function phase3(browser) {
   await page.close();
 }
 
-export const extra = [phase2, phase3];
+// Offline: load once online (the service worker stores the app), then go offline and reload.
+async function phase4(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1' });
+  const page = await context.newPage();
+  page.errors = [];
+  page.on('pageerror', (e) => page.errors.push(e.message));
+  // Same stand-in answers as the other tests, but on the context so they also apply after reloads.
+  const { routeAll } = await import('./helpers.mjs');
+  await routeAll(context, page, { traffic: TRAFFIC });
+  await page.addInitScript(() => {
+    if (sessionStorage.getItem('s')) return;
+    sessionStorage.setItem('s', '1');
+    localStorage.setItem('ls:planner:tab', '"planner"');
+    localStorage.setItem('ls:planner:positions', JSON.stringify({ WSSS: [{ id: 'a', name: 'East fence', lat: 1.36219, lon: 103.993297 }] }));
+  });
+  await page.goto(BASE);
+  await page.waitForFunction(() => document.querySelector('#plWind')?.textContent.includes('METAR WSSS'));
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload(); // now the service worker controls the page
+  await page.waitForSelector('.pl-pos');
+  const width = await page.evaluate(() => document.documentElement.scrollWidth);
+  check('[iPhone] no sideways scrolling at 390 px', width <= 390, `${width}px`);
+  check('[iPhone] airport search box is 16 px (no zoom-on-focus in Safari)', (await page.$eval('#plQ', (e) => getComputedStyle(e).fontSize)) === '16px');
+
+  // Go offline: the network is cut and every outside service fails.
+  await context.unrouteAll({ behavior: 'ignoreErrors' });
+  await context.route(/^https?:\/\/(?!localhost)/, (r) => r.abort('internetdisconnected'));
+  await context.setOffline(true);
+  await page.reload();
+  await page.waitForSelector('.pl-pos', { timeout: 10000 });
+  check('[offline] planner opens from the cache with Changi and your position', (await page.textContent('#plAirportInfo')).includes('Singapore Changi') && (await page.textContent('#plPosList')).includes('East fence'));
+  check('[offline] light chart still drawn (sun maths on the device, saved forecast)', (await page.locator('#plLight .pl-chart path').count()) === 24);
+  await page.waitForFunction(() => document.querySelector('#plWind')?.textContent.includes('Offline'));
+  check('[offline] last METAR shown with an offline note', (await page.textContent('#plWind')).includes('METAR WSSS 221130Z'));
+  await page.waitForFunction(() => document.querySelector('#plTraffic')?.textContent.includes('could not load'));
+  check('[offline] live traffic says it could not load', (await page.textContent('#plTraffic')).includes('no connection'));
+  await page.click('#tabLight');
+  check('[offline] the Light tab still works', (await page.locator('#sunStats .stat').count()) > 0);
+  check('[offline] no JavaScript errors', page.errors.length === 0, page.errors.join(' | '));
+  await context.close();
+}
+
+export const extra = [phase2, phase3, phase4];

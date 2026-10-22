@@ -38,15 +38,21 @@ export async function start() {
 
 export async function newPage(browser, { metar = 'real', traffic = null, viewport = { width: 1100, height: 900 } } = {}) {
   const page = await browser.newPage({ viewport });
-  page.errors = [];
-  page.on('pageerror', (e) => page.errors.push(e.message));
+  await routeAll(page, page, { metar, traffic });
+  return page;
+}
+
+// Stand-in answers for every outside service. `target` is a page or a whole browser context.
+export async function routeAll(target, page, { metar = 'real', traffic = null } = {}) {
+  page.errors ??= [];
+  if (target === page) page.on('pageerror', (e) => page.errors.push(e.message));
   // prompt()/confirm() answers, in order: page.answers.push('text')
   page.answers = [];
   page.on('dialog', (d) => (page.answers.length ? d.accept(page.answers.shift()) : d.dismiss()));
-  await page.route(/tile\.openstreetmap\.org|fonts\.(googleapis|gstatic)\.com|bigdatacloud|air-quality-api\.open-meteo\.com/, (r) => r.fulfill({ status: 204, body: '' }));
-  await page.route(/api\.open-meteo\.com\/v1\/forecast/, (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(forecast()) }));
+  await target.route(/tile\.openstreetmap\.org|fonts\.(googleapis|gstatic)\.com|bigdatacloud|air-quality-api\.open-meteo\.com/, (r) => r.fulfill({ status: 204, body: '' }));
+  await target.route(/api\.open-meteo\.com\/v1\/forecast/, (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(forecast()) }));
   page.relayCalls = [];
-  await page.route(/spotters-relay\.maotianze\.workers\.dev/, (r) => {
+  await target.route(/spotters-relay\.maotianze\.workers\.dev/, (r) => {
     const target = decodeURIComponent(new URL(r.request().url()).searchParams.get('url') || '');
     page.relayCalls.push(target);
     if (target.includes('aviationweather.gov')) {
@@ -60,6 +66,5 @@ export async function newPage(browser, { metar = 'real', traffic = null, viewpor
     }
     return r.fulfill({ status: 400, body: 'Not allowed' });
   });
-  return page;
 }
 
