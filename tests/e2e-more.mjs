@@ -127,7 +127,7 @@ async function phase4(browser) {
   await page.waitForSelector('.pl-pos');
   const width = await page.evaluate(() => document.documentElement.scrollWidth);
   check('[iPhone] no sideways scrolling at 390 px', width <= 390, `${width}px`);
-  check('[iPhone] airport search box is 16 px (no zoom-on-focus in Safari)', (await page.$eval('#plQ', (e) => getComputedStyle(e).fontSize)) === '16px');
+  check('[iPhone] airport search box is at least 16 px (no zoom-on-focus in Safari)', parseFloat(await page.$eval('#plQ', (e) => getComputedStyle(e).fontSize)) >= 16);
 
   // Go offline: the network is cut and every outside service fails.
   await context.unrouteAll({ behavior: 'ignoreErrors' });

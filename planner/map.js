@@ -32,7 +32,7 @@ export function createMap(el, { onTap, onMove, onSelect }) {
       const bounds = [];
       for (const r of airport.runways) {
         const sel = r.name === selectedName;
-        const line = L.polyline([[r.leLat, r.leLon], [r.heLat, r.heLon]], { color: sel ? '#f4a53c' : '#9b9ebd', weight: sel ? 7 : 5, opacity: 0.9 }).addTo(runwayLayer);
+        const line = L.polyline([[r.leLat, r.leLon], [r.heLat, r.heLon]], { color: sel ? '#ff9500' : '#8e8e93', weight: sel ? 7 : 5, opacity: 0.9 }).addTo(runwayLayer);
         line.bindTooltip(r.name);
         for (const [lat, lon, id] of [[r.leLat, r.leLon, r.leIdent], [r.heLat, r.heLon, r.heIdent]]) {
           L.marker([lat, lon], { icon: label(id, sel ? 'is-sel' : ''), interactive: false }).addTo(runwayLayer);
@@ -55,12 +55,12 @@ export function createMap(el, { onTap, onMove, onSelect }) {
     showSightline(pos, Q, sunAz) {
       lineLayer.clearLayers();
       if (!pos) return;
-      if (Q) L.polyline([[pos.lat, pos.lon], [Q.lat, Q.lon]], { color: '#5b84ff', weight: 2, dashArray: '5 6' }).addTo(lineLayer);
+      if (Q) L.polyline([[pos.lat, pos.lon], [Q.lat, Q.lon]], { color: '#007aff', weight: 2, dashArray: '5 6' }).addTo(lineLayer);
       if (sunAz != null) {
         const d = 0.004; // about 450 m on the map
         const rad = sunAz * Math.PI / 180, k = Math.cos(pos.lat * Math.PI / 180);
         const end = [pos.lat + d * Math.cos(rad), pos.lon + d * Math.sin(rad) / k];
-        L.polyline([[pos.lat, pos.lon], end], { color: '#f4a53c', weight: 3 }).addTo(lineLayer).bindTooltip('☀');
+        L.polyline([[pos.lat, pos.lon], end], { color: '#ff9500', weight: 3 }).addTo(lineLayer).bindTooltip('☀');
       }
     },
     setTapMode(on) {
