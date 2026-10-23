@@ -13,7 +13,6 @@ async function phase1(browser) {
   await page.waitForSelector('#plAirportInfo .pl-airport-name');
   check('[planner] defaults to Singapore Changi from OurAirports', (await page.textContent('#plAirportInfo')).includes('Singapore Changi Airport') && (await page.textContent('#plAirportInfo')).includes('WSSS / SIN'));
   check('[planner] Changi has its three runways', (await page.locator('#plRunways .chip').count()) === 3);
-  check('[planner] safety reminder shown', (await page.textContent('.pl-safety')).includes('restricted areas'));
   check('[planner] no positions are suggested', (await page.locator('.pl-pos').count()) === 0 && (await page.textContent('#plPosList')).includes('No positions yet'));
 
   // Add a position by coordinates: ~1 km east of the 02L/20R middle (right of planes flying 02L).

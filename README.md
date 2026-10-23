@@ -15,10 +15,6 @@ Helps you choose **when** to photograph aircraft from a spot **you** chose, at a
 aircraft that faces you will be lit, which runway end is likely in use from the latest wind report, the cloud
 forecast, and aircraft arriving or departing right now.
 
-> **Spot responsibly.** The planner never suggests places to stand: it only uses positions you add. Check local
-> rules, airport security restrictions and private property boundaries, and never enter restricted areas. The
-> same reminder is on the page.
-
 **Calculated vs estimated.** Things marked **Calculated** are maths on exact inputs: the sun's position, your
 distance and direction to the runway, headwind and crosswind. Things marked **Estimate** are judgements: the light
 score, the runway likely in use, which aircraft are arriving or departing, and their time to the runway.

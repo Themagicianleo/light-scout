@@ -1,7 +1,5 @@
 /* planner.css: styles for the "Plane spotting" tab. Uses Light Scout's colour variables (--surface, --gold, ...),
    so light and dark mode follow the app automatically. */
-.pl-safety { border-color: var(--meh); }
-.pl-safety p { margin: 0; font-size: 14px; }
 .pl-search { display: flex; flex-direction: column; gap: 4px; }
 .pl-search input { width: 100%; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--raised); color: var(--fg); }
 .pl-airport-name { font-family: var(--f-display); font-size: 20px; font-weight: 700; }

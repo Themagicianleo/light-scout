@@ -60,10 +60,6 @@ export function addCard(card) {
 // ---------- skeleton (built once) ----------
 function skeleton(root) {
   root.innerHTML = `
-  <section class="card pl-safety" role="note">
-    <div class="card-head"><h2>⚠︎ <span data-pl="safetyTitle"></span></h2></div>
-    <p data-pl="safety"></p>
-  </section>
   <section class="card" id="plAirportCard">
     <div class="card-head"><h2 data-pl="airportTitle"></h2><span class="label">OurAirports</span></div>
     <div class="pl-search"><input id="plQ" type="search" autocomplete="off" data-pl-ph="airportPh"><div class="results" id="plResults"></div></div>
